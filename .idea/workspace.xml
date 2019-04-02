@@ -7,20 +7,115 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="17742550-e584-4e47-8db7-b85932b37321" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/target/classes/Kmeans$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/Kmeans.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/dao/User.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/service/HDFSAdminUtils.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/service/ShopExtDataClean$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/service/ShopExtDataClean.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/service/Test$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/service/Test.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/service/TradeDataClean$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/service/TradeDataClean.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/service/UserServicee.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/BankBondCalculte.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/CCustBranchTb$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/CCustBranchTb.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/CalOpenDate$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/CalOpenDate.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/CalculateData$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/CalculateData.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/CapitaIdleRate.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/DedicateTrends$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/DedicateTrends.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/GetTargetData$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/GetTargetData.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/LastTradeTime$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/LastTradeTime.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/PeakValueAsset$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/PeakValueAsset.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/SparkInitConf$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/SparkInitConf.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/TradingFrequency$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/TradingFrequency.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/TransactionAmount$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/TransactionAmount$CCustBranchTb$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/TransactionAmount$CCustBranchTb.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/spark/TransactionAmount.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/ClientUtils$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/ClientUtils.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/DateUtils$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/DateUtils.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/HDFSUtilScala$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/HDFSUtilScala.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/HDFSUtils.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/IpUtils$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/IpUtils.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/MySQLUtils$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/MySQLUtils.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SnowflakeUtils$IdGenHolder.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SnowflakeUtils.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SparkJson$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SparkJson$UserTag$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SparkJson$UserTag.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SparkJson.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SparkReadCSV$$typecreator3$1.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SparkReadCSV$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SparkReadCSV$Person$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SparkReadCSV$Person.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/SparkReadCSV.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/Spark_Sql_Load_Data_To_Hive$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/com/data/utils/Spark_Sql_Load_Data_To_Hive.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/com/data/spark/CalculateResultData.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/com/data/spark/CalcuteCustAge.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/com/data/spark/ConstAggrateFactor.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/com/data/spark/ConstBranchValue.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/com/data/spark/ConstantAggreateRank.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/com/data/spark/ml/KmeansTest$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/com/data/spark/ml/KmeansTest.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/App$$typecreator3$1.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/App$$typecreator7$1.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/App$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/App.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/Data$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/Data.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/DataFrameApi$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/DataFrameApi.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/DataFrameRDD$$typecreator3$1.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/DataFrameRDD$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/DataFrameRDD$People$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/DataFrameRDD$People.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/DataFrameRDD.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/DataFromMysql$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/DataFromMysql.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/HiveContextTest$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/HiveContextTest.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/MysqlOpt$$typecreator1$1.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/MysqlOpt$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/MysqlOpt.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/OperatorHDFSByAPI$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/OperatorHDFSByAPI.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/ParquetApp$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/ParquetApp.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SparkMysql$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SparkMysql.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SparkRDD$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SparkRDD.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SparkSQLThriftServer$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SparkSQLThriftServer.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SparkSessionTest$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SparkSessionTest.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SparkSqlToMysql$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SparkSqlToMysql.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SqlContextTest$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/SqlContextTest.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/WordCount$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/WordCount.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/resultset$.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/classes/scala/service/resultset.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/test-classes/com/java/test/HDFSAdminTest.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/target/test-classes/com/scala/test/AppTest.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/BankBondCalculte.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/BankBondCalculte.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/CalOpenDate.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/CalOpenDate.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/CalculateData.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/CalculateData.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/CalculateResultData.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/CalculateResultData.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/CalcuteCustAge.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/CalcuteCustAge.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/CapitaIdleRate.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/CapitaIdleRate.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/ConstAggrateFactor.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/ConstAggrateFactor.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/ConstBranchValue.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/ConstBranchValue.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/ConstantAggreateRank.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/ConstantAggreateRank.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/DedicateTrends.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/DedicateTrends.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/spark/GetTargetData.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/spark/GetTargetData.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/com/data/utils/SparkReadCSV.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/com/data/utils/SparkReadCSV.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/META-INF/sparksqltrain.kotlin_module" beforeDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
@@ -91,8 +186,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/scala/com/data/spark/BankBondCalculte.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="208">
-              <caret line="8" column="33" selection-start-line="8" selection-start-column="33" selection-end-line="8" selection-end-column="33" />
+            <state relative-caret-position="234">
+              <caret line="9" column="29" lean-forward="true" selection-start-line="9" selection-start-column="29" selection-end-line="9" selection-end-column="29" />
               <folding>
                 <element signature="e#24#55#0" expanded="true" />
               </folding>
@@ -232,6 +327,11 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="0.1" />
+      </map>
+    </option>
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -357,14 +457,6 @@
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="main" type="462c0819:PsiDirectoryNode" />
               <item name="spark" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="sparksqltrain" type="b2602c69:ProjectViewProjectNode" />
-              <item name="sparksqltrain" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="462c0819:PsiDirectoryNode" />
-              <item name="spark" type="462c0819:PsiDirectoryNode" />
-              <item name="PeakValueAsset.scala" type="6117b065:FileNode" />
             </path>
           </expand>
           <select />
@@ -572,7 +664,7 @@
       <workItem from="1554078958942" duration="623000" />
       <workItem from="1554079656697" duration="2858000" />
       <workItem from="1554084094479" duration="16635000" />
-      <workItem from="1554165184223" duration="27890000" />
+      <workItem from="1554165184223" duration="28560000" />
     </task>
     <task id="LOCAL-00001" summary="2019-03-26">
       <created>1554195921876</created>
@@ -581,11 +673,18 @@
       <option name="project" value="LOCAL" />
       <updated>1554195921876</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="2019-04-02">
+      <created>1554197368460</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1554197368460</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="195357000" />
+    <option name="totallyTimeSpent" value="196027000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -621,7 +720,7 @@
       <window_info anchor="bottom" id="Messages" order="10" sideWeight="0.4977307" weight="0.31282052" />
       <window_info anchor="bottom" id="Java Enterprise" order="11" weight="0.32991454" />
       <window_info anchor="bottom" id="Database Changes" order="12" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" order="13" weight="0.32991454" />
+      <window_info anchor="bottom" id="Version Control" order="13" weight="0.50427353" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.24962178" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -639,9 +738,36 @@
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="RECENTLY_FILTERED_USER_GROUPS">
+                <collection />
+              </option>
+              <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+                <collection />
+              </option>
+              <option name="COLUMN_ORDER">
+                <list>
+                  <option value="0" />
+                  <option value="1" />
+                  <option value="2" />
+                  <option value="3" />
+                </list>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="2019-03-26" />
-    <option name="LAST_COMMIT_MESSAGE" value="2019-03-26" />
+    <MESSAGE value="2019-04-02" />
+    <option name="LAST_COMMIT_MESSAGE" value="2019-04-02" />
   </component>
   <component name="antWorkspaceConfiguration">
     <option name="IS_AUTOSCROLL_TO_SOURCE" value="false" />
@@ -1049,8 +1175,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/scala/com/data/spark/BankBondCalculte.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="208">
-          <caret line="8" column="33" selection-start-line="8" selection-start-column="33" selection-end-line="8" selection-end-column="33" />
+        <state relative-caret-position="234">
+          <caret line="9" column="29" lean-forward="true" selection-start-line="9" selection-start-column="29" selection-end-line="9" selection-end-column="29" />
           <folding>
             <element signature="e#24#55#0" expanded="true" />
           </folding>
