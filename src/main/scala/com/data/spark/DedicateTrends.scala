@@ -7,7 +7,7 @@ import org.apache.spark.sql.SparkSession
 class DedicateTrends {
 
   val conf = new SparkConf()
-    .setAppName("GetTargetDataReplace")
+    .setAppName("DedicateTrends")
     .setMaster("yarn-client")
 
   val spark = SparkSession

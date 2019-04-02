@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 class ConstAggrateFactor {
 
   val conf = new SparkConf()
-    .setAppName("GetTargetDataReplace")
+    .setAppName("ConstAggrateFactor")
     .setMaster("yarn-client")
 
   val spark = SparkSession

@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 
 class BankBondCalculte {
   val conf = new SparkConf()
-    .setAppName("GetTargetDataReplace")
+    .setAppName("BankBondCalculte")
     .setMaster("yarn-client")
 
   val spark = SparkSession

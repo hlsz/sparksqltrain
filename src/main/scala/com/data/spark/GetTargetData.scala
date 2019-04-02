@@ -12,7 +12,7 @@ case class CCustBranchTb(cCustNo:String, branchNo:String,organFlag:String)
 class GetTargetData{
 
   val conf = new SparkConf()
-    .setAppName("GetTargetDataReplace")
+    .setAppName("GetTargetData")
     .setMaster("yarn-client")
 
   val spark = SparkSession

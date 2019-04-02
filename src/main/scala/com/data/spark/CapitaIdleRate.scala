@@ -7,7 +7,7 @@ import org.apache.spark.sql.SparkSession
 class CapitaIdleRate {
 
   val conf = new SparkConf()
-    .setAppName("GetTargetDataReplace")
+    .setAppName("CapitaIdleRate")
     .setMaster("yarn-client")
 
   val spark = SparkSession

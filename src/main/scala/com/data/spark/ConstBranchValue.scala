@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 class ConstBranchValue {
 
   val conf = new SparkConf()
-    .setAppName("GetTargetDataReplace")
+    .setAppName("ConstBranchValue")
     .setMaster("yarn-client")
 
   val spark = SparkSession

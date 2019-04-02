@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 class CalculateResultData {
 
   val conf = new SparkConf()
-    .setAppName("GetTargetDataReplace")
+    .setAppName("CalculateResultData")
     .setMaster("yarn-client")
 
   val spark = SparkSession

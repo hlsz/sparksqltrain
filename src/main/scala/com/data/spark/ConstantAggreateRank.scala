@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 class ConstantAggreateRank {
 
   val conf = new SparkConf()
-    .setAppName("GetTargetDataReplace")
+    .setAppName("ConstantAggreateRank")
     .setMaster("yarn-client")
 
   val spark = SparkSession

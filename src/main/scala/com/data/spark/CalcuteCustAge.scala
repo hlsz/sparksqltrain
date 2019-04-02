@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 class CalcuteCustAge {
 
   val conf = new SparkConf()
-    .setAppName("GetTargetDataReplace")
+    .setAppName("CalcuteCustAge")
     .setMaster("yarn-client")
 
   val spark = SparkSession

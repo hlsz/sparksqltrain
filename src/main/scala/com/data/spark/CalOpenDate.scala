@@ -7,7 +7,7 @@ import org.apache.spark.sql.SparkSession
 class CalOpenDate {
 
   val conf = new SparkConf()
-    .setAppName("GetTargetDataReplace")
+    .setAppName("CalOpenDate")
     .setMaster("yarn-client")
 
   val spark = SparkSession

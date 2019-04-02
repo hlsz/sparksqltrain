@@ -73,11 +73,11 @@ object SparkReadCSV {
   val newDF = spark.createDataFrame(dfRDD, schema3)
 
 
-  val rowRDD4 = rowRDD.map(attr => {
-    val myAttr:Array[String] = attr
-    val myColNameIndexArr:Array[Int] = c
-
-  })
+//  val rowRDD4 = rowRDD.map(attr => {
+//    val myAttr:Array[String] = attr
+//    val myColNameIndexArr:Array[Int] = c
+//
+//  })
 
 
 
