@@ -39,6 +39,11 @@ object DateUtils {
     val str = String.valueOf(date)
     dateFormat.parse(str.substring(0,4)+"-"+str.substring(4,6)+"-"+str.substring(6,8))
   }
+  def intToDateStr(date: Int): String ={
+    val dateFormat = new SimpleDateFormat(DateUtils.DATE_FORMAT)
+    val str = String.valueOf(date)
+    dateFormat.parse(str.substring(0,4)+"-"+str.substring(4,6)+"-"+str.substring(6,8)).toString
+  }
 
   def longToDate(dateLong : Long): Date ={
     val timeDate: String = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(dateLong * 1000L)

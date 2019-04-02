@@ -15,9 +15,14 @@ class CalOpenDate {
     .config(conf)
     //解决DecimalType存储精度问题， parquet格式 spark和hive不统一
     .config("spark.sql.parquet.writeLegacyFormat", true)
-    .config("spark.sql.warehouse.dir", "/user/hive/warehouse/bigdata")
+    .config("spark.sql.warehouse.dir", "/user/hive/warehouse/bigdata.db")
+    //数据倾斜
+    .config("spark.sql.shuffle.partitions", 500)
     .enableHiveSupport()
     .getOrCreate()
+
+
+
 
   def  calOpenDate(calDate:Int, tableName:String): Unit =
   {
@@ -37,7 +42,7 @@ class CalOpenDate {
       " from global_temp.c_cust_branch_tb ")
     resultDataOpenDF.createOrReplaceTempView("resultDataOpenTmp")
 
-    spark.sql("insert overwrite into bigdata."+ tableName +"select * from resultDataOpenTmp ")
+    spark.sql("insert overwrite table bigdata."+ tableName +"select * from resultDataOpenTmp ")
 
     spark.stop()
 

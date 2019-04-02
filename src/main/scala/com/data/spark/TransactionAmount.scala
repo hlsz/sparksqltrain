@@ -16,7 +16,9 @@ class  TransactionAmount
     .config(conf)
     //解决DecimalType存储精度问题， parquet格式 spark和hive不统一
     .config("spark.sql.parquet.writeLegacyFormat", true)
-    //    .config("spark.sql.warehouse.dir","/user/hive/warehouse")
+    //数据倾斜
+    .config("spark.sql.shuffle.partitions", 500)
+    //    .config("spark.sql.warehouse.dir","/user/hive/bigdata.db")
     .enableHiveSupport()
     .getOrCreate()
 
@@ -32,8 +34,8 @@ class  TransactionAmount
 
     val calcDateVal = DateUtils.intToDate(calcuDate)
     // addOrMinusDayToLong
-    val approchMonthsVal = DateUtils.dateToInt(DateUtils.addOrMinusDay(calcDateVal, -approchMonths))
-    val remoteMonthsVal = DateUtils.dateToInt(DateUtils.addOrMinusDay(calcDateVal, -remoteMonths))
+    val approchMonthsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -approchMonths))
+    val remoteMonthsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -remoteMonths))
 
     val schema = StructType(List(
       StructField("c_custno", StringType, true),
@@ -44,7 +46,7 @@ class  TransactionAmount
     ))
 
     //create Hive table
-    sqlContext.sql("create table IF NOT EXISTS  "+ tableName +
+    sqlContext.sql("create  table  IF NOT EXISTS   bigdata."+ tableName +
       "( c_custno  string, appro_months_amount double, remo_months_amount double, " +
       " amount_tendency double, branch_no string ) " +
       " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
@@ -53,17 +55,17 @@ class  TransactionAmount
       " stored as textfile ")
 
 
-    val appro_months_amount_sql = spark.sql("select c_custno, " +
-      "(case when sum(f_businessbalance) is null then 0 else sum(f_businessbalance) end ) as appro_months_amount " +
-      "from  bigdata."+dataSourTable+
-      "where c_custno in (select c_custno from global_temp."+targetCustTab+" )" +
+    val approMonthsAmountDF= spark.sql("select c_custno, " +
+      " (case when sum(f_businessbalance) is null then 0 else sum(f_businessbalance) end ) as appro_months_amount " +
+      " from  bigdata."+dataSourTable+
+      " where c_custno in (select c_custno from global_temp."+targetCustTab+" ) " +
       " and l_date <  " + calcuDate +
       " and l_date >= " + approchMonthsVal +
       " group by c_custno  ")
 
-    appro_months_amount_sql.createOrReplaceTempView("appro_months_amount_tab")
+    approMonthsAmountDF.createOrReplaceTempView("approMonthsAmountTmp")
 
-    val remot_months_amount_sql = spark.sql("select c_custno, " +
+    val remotMonthsAmountDF= spark.sql("select c_custno, " +
       "(case when sum(f_businessbalance) is null  then 0 else sum(f_businessbalance) end ) as appro_months_amount " +
       "from  bigdata."+dataSourTable+
       "where c_custno in (select c_custno from global_temp."+targetCustTab+" )" +
@@ -76,7 +78,7 @@ class  TransactionAmount
     //      .filter("l_date < calcuDate and l_date >= remoteMonthsVal")
 
     // global_temp  global view
-    remot_months_amount_sql.createOrReplaceTempView("remot_months_amount_tab")
+    remotMonthsAmountDF.createOrReplaceTempView("remotMonthsAmountTmp")
 
     val amountTransactionDF =  spark.sql("select c_custno, appro_months_amount, remo_months_amount,  " +
       " (case when remo_months_amount = 0 then 0 else appro_months_amount * ( " + remoteMonths +
@@ -85,12 +87,12 @@ class  TransactionAmount
       " (case when c.remo_months_amount is null then 0 else c.remo_months_amount end) as  remo_months_amount ," +
       " branch_no " +
       " from (select c_custno,branch_no from global_temp."+ targetCustTab +" ) a " +
-      " left join remot_months_amount_tab b on a.c_custno =  b.c_custno " +
-      " left join appro_months_amount_tab  c on a.c_custno = c.c_custno ) "
+      " left outer join remotMonthsAmountTmp b on a.c_custno =  b.c_custno " +
+      " left outer join approMonthsAmountTmp  c on a.c_custno = c.c_custno ) "
     )
     amountTransactionDF.createOrReplaceTempView("amountTransactionTmp")
 
-    spark.sql("insert into overwrite bigdata."+tableName + "select * from amountTransactionTmp ")
+    spark.sql("insert overwrite table bigdata."+tableName + "select * from amountTransactionTmp ")
 
     spark.stop()
 }

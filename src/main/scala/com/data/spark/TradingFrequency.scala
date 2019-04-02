@@ -15,7 +15,9 @@ class TradingFrequency {
     .config(conf)
     //解决DecimalType存储精度问题， parquet格式 spark和hive不统一
     .config("spark.sql.parquet.writeLegacyFormat", true)
-    .config("spark.sql.warehouse.dir", "/user/hive/warehouse/bigdata")
+    //数据倾斜
+    .config("spark.sql.shuffle.partitions", 500)
+    .config("spark.sql.warehouse.dir", "/user/hive/warehouse/bigdata.db")
     .enableHiveSupport()
     .getOrCreate()
 
@@ -24,19 +26,20 @@ class TradingFrequency {
 
     val calcDateVal = DateUtils.intToDate(calcuDate)
     // addOrMinusDayToLong
-    val approchMonthsVal = DateUtils.dateToInt(DateUtils.addOrMinusDay(calcDateVal, -approchMonths))
-    val remoteMonthsVal = DateUtils.dateToInt(DateUtils.addOrMinusDay(calcDateVal, -remoteMonths))
+    val approchMonthsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -approchMonths))
+    val remoteMonthsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -remoteMonths))
 
     spark.sql("use bigdata")
 
-    spark.sql("create table IF NOT EXISTS bigdata." + tableName + " ( c_custno string, appro_months_count double, " +
+    spark.sql("create table IF NOT EXISTS bigdata." + tableName +
+      " ( c_custno string, appro_months_count double, " +
       " remo_months_count double, frequency_tendency double, branch_no string ) " +
       " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
       " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
       " map keys terminated by ':' " +
       " stored as textfile ")
 
-    val appro_months_amount_df = spark.sql("select c_custno, count(c_custno) as appro_months_count " +
+    val approMonthsAmountDF = spark.sql("select c_custno, count(c_custno) as appro_months_count " +
       " from bigdata." + dataSourTab +
       " where c_custno in (select c_custno from  global_temp." + targetCustTab + " ) " +
       " and l_date <  " + calcuDate +
@@ -44,17 +47,17 @@ class TradingFrequency {
       " groupu by c_custno "
     )
 
-    appro_months_amount_df.createOrReplaceTempView("appro_months_amount")
+    approMonthsAmountDF.createOrReplaceTempView("approMonthsAmountTmp")
 
 
-    val remo_months_amount_df = spark.sql("select c_custno, count(c_custno) as appro_months_count " +
+    val remoMonthsAmountDF = spark.sql("select c_custno, count(c_custno) as appro_months_count " +
       " from bigdata." + dataSourTab +
       " where c_custno in (select c_custno from  global_temp." + targetCustTab + " ) " +
       " and l_date <  " + calcuDate +
       " and l_date >=  " + remoteMonthsVal +
       " groupu by c_custno "
     )
-    remo_months_amount_df.createOrReplaceTempView("remo_months_amount")
+    remoMonthsAmountDF.createOrReplaceTempView("remoMonthsAmountTmp")
 
     val frequencyTradingDF = spark.sql(" select c_custno, appro_months_count, remo_months_count, " +
       " (case when remo_months_count = 0 then 0 else " +
@@ -65,12 +68,12 @@ class TradingFrequency {
       " (case when remo_months_count is null then 0 else remo_months_count end ) as remo_months_count , " +
       " branch_no from " +
       " ( select c_custno, branch_no from global_temp." + targetCustTab + " ) a " +
-      " left outer join remo_months_amount  b on a.c_custno = b.c_custno " +
-      " left outer join appro_months_amount  c on a.c_custno = c.c_custno )")
+      " left outer join remoMonthsAmountTmp  b on a.c_custno = b.c_custno " +
+      " left outer join approMonthsAmountTmp  c on a.c_custno = c.c_custno )")
 
     frequencyTradingDF.createOrReplaceTempView("frequencyTradingTmp")
 
-    spark.sql(" insert overwrite into bigdata."+tableName+" select * from frequencyTradingTmp"   )
+    spark.sql(" insert overwrite  table bigdata."+tableName+" select * from frequencyTradingTmp"   )
 
 //    df.write.mode("overwrite").saveAsTable(tableName)
 

@@ -5,7 +5,7 @@ import com.data.utils.DateUtils
 class LastTradeTime
 {
 
-  val spark = new  SparkInitConf().getSparkSession()
+  val spark = new  SparkInitConf().getSparkSession("LastTradeTime","yarn-client")
 
   def  lastTradeTime(calcuDate:Int, tableName:String, dataSourTab:String, targetCustTab:String, dateContains:Int): Unit =
   {
@@ -13,10 +13,11 @@ class LastTradeTime
 
     val calcDateVal = DateUtils.intToDate(calcuDate)
     // addOrMinusDayToLong
-    val dateContainsVal = DateUtils.dateToInt(DateUtils.addOrMinusDay(calcDateVal, -dateContains))
+    val dateContainsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -dateContains))
 
     spark.sql("use bigdata")
-    spark.sql("create table IF NOT EXISTS bigdata." +tableName +" ( c_custno string, branch_no string, " +
+    spark.sql("create table IF NOT EXISTS bigdata." +tableName +
+      " ( c_custno string, branch_no string, " +
       " l_date int, c_businessflag string, c_remark string, lastdate_dvalue int ) " +
       " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
       " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
@@ -32,17 +33,18 @@ class LastTradeTime
       " and l_date >=  "+dateContainsVal+" ) " +
       " where rn = 1 ")
 
-    lastTradeDateDF.createOrReplaceTempView("lastTradeDate")
+    lastTradeDateDF.createOrReplaceTempView("lastTradeDateTmp")
 
     val tradeTimeLastDF =spark.sql("select c_custno, branch_no, l_date, c_businessflag, c_remark ," +
       " (case when l_date = 0 and "+dateContains+" =3 the 100" +
       "       when l_date = 0 and "+dateContains+" =6 the 200 " +
       "       when l_date = 0 and "+dateContains+" =9 the 400 " +
-      "  else datediff ("+DateUtils.dateFormat(calcuDate,"yyyyMMdd")+", l_date )  and ) as lastdate_dvalue " +
+      "  else datediff ("+DateUtils.intToDateStr(calcuDate)+
+      " ,  concat(substr(cast(l_date as string),0,4),'-',substr(cast(l_date as string),5,2),'-',substr(cast(l_date as string),7,2) ) ) as lastdate_dvalue " +
       " from (select a.c_custno, a.branch_no, nvl(l_date,0) as l_date, nvl(c_businessflag, 0) as c_businessflag, " +
       "             c_remark " +
       "        from (select c_custno, branch_no from global_temp."+targetCustTab+")  a " +
-      "        left  outer join lastTradeDate b on a.c_custno=b.c_custno ) ")
+      "        left  outer join lastTradeDateTmp b on a.c_custno=b.c_custno ) ")
 
     tradeTimeLastDF.createOrReplaceTempView("tradeTimeLast")
 

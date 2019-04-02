@@ -15,7 +15,9 @@ class DedicateTrends {
     .config(conf)
     //解决DecimalType存储精度问题， parquet格式 spark和hive不统一
     .config("spark.sql.parquet.writeLegacyFormat", true)
-    .config("spark.sql.warehouse.dir", "/user/hive/warehouse/bigdata")
+    .config("spark.sql.warehouse.dir", "/user/hive/warehouse/bigdata.db")
+    //数据倾斜
+    .config("spark.sql.shuffle.partitions", 500)
     .enableHiveSupport()
     .getOrCreate()
 
@@ -24,12 +26,12 @@ class DedicateTrends {
 
     val calcDateVal = DateUtils.intToDate(calcuDate)
     // addOrMinusDayToLong
-    val approchMonthsVal = DateUtils.dateToInt(DateUtils.addOrMinusDay(calcDateVal, -approchMonths))
-    val remoteMonthsVal = DateUtils.dateToInt(DateUtils.addOrMinusDay(calcDateVal, -remoteMonths))
+    val approchMonthsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -approchMonths))
+    val remoteMonthsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -remoteMonths))
 
     spark.sql("use bigdata")
 
-    spark.sql("if not exists create table bigdata."+tableName + " (" +
+    spark.sql("create  table  IF NOT EXISTS  bigdata."+tableName + " (" +
       " c_custno string, f_fare0_approch double, f_fare0_remote double, f_fare0_tendency double, branch_no string ) " +
       " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
       " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
@@ -75,7 +77,7 @@ class DedicateTrends {
 
     trendDelicateDF.createOrReplaceTempView("trendDelicateTmp")
 
-    spark.sql("insert overwrite bigdata."+tableName+" select * from trendDelicateTmp ")
+    spark.sql("insert overwrite table  bigdata."+tableName+" select * from trendDelicateTmp ")
 
     spark.stop()
 

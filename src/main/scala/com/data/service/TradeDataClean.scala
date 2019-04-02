@@ -69,7 +69,7 @@ object TradeDataClean {
     val previousDay = DateUtils.addOrMinusDay(new Date(), -1)
     //val tmepRdd = rs.rdd.saveAsTextFile("hdfs://bigdata1:9000/bplan/data-center/temp.txt")
     val pt_createDate = DateUtils.dateFormat(previousDay, "yyyyMMdd");
-    spark.sql("INSERT INTO TABLE tb_trade_info partition(pt_createDate=" + pt_createDate + ") " +
+    spark.sql("INSERT INTO   tb_trade_info partition(pt_createDate=" + pt_createDate + ") " +
       "SELECT " +
       "    ttit.agentId as agentId, " +
       "    from_unixtime(ttit.payTimeUnix,'yyyyMMdd') as createDate " +

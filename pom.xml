@@ -27,28 +27,47 @@
 
   <dependencies>
 
+      <!-- https://mvnrepository.com/artifact/org.json4s/json4s-core -->
+      <dependency>
+          <groupId>org.json4s</groupId>
+          <artifactId>json4s-core_2.11</artifactId>
+          <version>3.6.5</version>
+      </dependency>
+
+      <!-- https://mvnrepository.com/artifact/org.json4s/json4s-ext -->
+      <dependency>
+          <groupId>org.json4s</groupId>
+          <artifactId>json4s-ext_2.11</artifactId>
+          <version>3.6.5</version>
+      </dependency>
+
+      <!-- https://mvnrepository.com/artifact/org.json4s/json4s-jackson -->
+      <dependency>
+          <groupId>org.json4s</groupId>
+          <artifactId>json4s-jackson_2.11</artifactId>
+          <version>3.6.5</version>
+      </dependency>
+
+      <!-- https://mvnrepository.com/artifact/org.json4s/json4s-native -->
+      <dependency>
+          <groupId>org.json4s</groupId>
+          <artifactId>json4s-native_2.11</artifactId>
+          <version>3.6.5</version>
+      </dependency>
+
+
       <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-mllib -->
       <dependency>
           <groupId>org.apache.spark</groupId>
           <artifactId>spark-mllib_2.11</artifactId>
           <version>${spark.version}</version>
-          <scope>runtime</scope>
       </dependency>
-
-      <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-mllib-local -->
-      <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-mllib-local_2.11</artifactId>
-          <version>${spark.version}</version>
-      </dependency>
-
 
       <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-streaming -->
       <dependency>
           <groupId>org.apache.spark</groupId>
           <artifactId>spark-streaming_2.11</artifactId>
           <version>${spark.version}</version>
-          <scope>provided</scope>
       </dependency>
       <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-graphx -->
       <dependency>
@@ -56,14 +75,6 @@
           <artifactId>spark-graphx_2.11</artifactId>
           <version>${spark.version}</version>
       </dependency>
-
-      <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-yarn -->
-      <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-yarn_2.11</artifactId>
-          <version>${spark.version}</version>
-      </dependency>
-
 
       <dependency>
       <groupId>org.apache.poi</groupId>
