@@ -32,7 +32,7 @@ class CapitaIdleRate {
     val capitalCalDataDF = spark.sql(
       s"""
          | select
-         |	cust_no,
+         |	cust_no c_custno,
          |	oc_date,
          |	balance,
          |	total_assbal
@@ -73,6 +73,15 @@ class CapitaIdleRate {
        """.stripMargin)
     calRemoteCapitalIdleDF.createOrReplaceTempView("calRemoteCapitalIdleTmp")
 
+    spark.sql("delete from capital_idal_rate_tb where input_date = "+ calcuDate)
+    spark.sql(" create table if not exists capital_idal_rate_tb " +
+      " ( c_custno string, branch_no string, client_id int, approch_idle_rate double, remote_idle_rate double, " +
+      " idle_rate_tendency double, input_date int ) " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
+      " stored as textfile " )
+
     //  --插入计算结果
     val capitalIdalRateDF = spark.sql(
       s"""
@@ -97,23 +106,34 @@ class CapitaIdleRate {
          |				a.branch_no,
          |				client_id,
          |				nvl(remote_idle_rate,0) remote_idle_rate
-         |		 from cust_no_tb a
+         |		 from bigdata.c_cust_branch_tb a
          |		 left join  calRemoteCapitalIdleTmp  b on a.c_custno = b.c_custno) c
-         |	  left join  calApprochCapitalIdleTmp   d on c.c_custno = d.c_custno)
+         |	  left join  calApprochCapitalIdleTmp   d on c.c_custno = d.c_custno) d
        """.stripMargin)
 
     capitalIdalRateDF.createOrReplaceTempView("capitalIdalRateTmp")
+    spark.sql("insert into capital_idal_rate_tb select * from capitalIdalRateTmp")
 
-    val countAllClientDF = spark.sql("select count(1) cnt from global_temp.c_cust_branch_tb ").collect()
+
+    val countAllClientDF = spark.sql("select count(1) cnt from c_cust_branch_tb ").collect()
     val countAllClient = countAllClientDF.map(x => x(0))
 
+
+    spark.sql("create table if not exists result_idle_rate " +
+      "( client_id int, branch_no string, c_custno string, approch_idle_rate double, remote_idle_rate double, " +
+      " approidle_all_rank double, approidle_b_rank double, remoteidle_all_rank double, remoteidle_b_rank double, " +
+      " input_date int, idle_rate_tendency double  ) " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
+      " stored as textfile ")
     spark.sql("delete  from result_idle_rate where input_date = "+calcuDate)
 
 
     spark.sql(
       s"""
          | insert  into
-         |  result_idle_rate(
+         |  result_idle_rate (
          |   client_id
          |   ,branch_no
          |   ,c_custno
@@ -150,27 +170,27 @@ class CapitaIdleRate {
          | ,dense_rank() over(partition by branch_no order by approch_idle_rate desc ) abranch_rank
          | ,dense_rank() over(order by remote_idle_rate  desc)  rcompay_rank
          | ,dense_rank() over(partition by branch_no order by remote_idle_rate desc ) rbranch_rank
-         | from capital_idal_rate_tb  capitalIdalRateTmp where input_date = calcu_date ) a
-         | left join(select  count(*) branchallcount ,branch_no from bigdata.hs08_client_for_ai  where cancel_date=0 group by branch_no
+         | from capital_idal_rate_tb  where input_date = ${calcuDate} ) a
+         | left join (select  count(*) branchallcount ,branch_no from bigdata.c_cust_branch_tb   group by branch_no
          |  ) b  on a.branch_no =b.branch_no
        """.stripMargin)
 
     spark.sql(
       s"""
-         | create  table  IF NOT EXISTS   result_branchidle (
-         |  branch_no int ,
+         | create  table  IF NOT EXISTS   bigdata.result_branchidle (
+         |  branch_no string ,
          | approavg_idlerate double ,
          | appromed_idlerate double,
          | remoteavg_idlerate double,
          | remotemed_idlerate double,
          | input_date int )
-         | ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-         | LINES TERMINATED BY ‘\n’ collection items terminated by '-'
-         | map keys terminated by ':'
+         | ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"}
+         | LINES TERMINATED BY ${raw"'\n’"}
+         |
          | stored as textfile
        """.stripMargin)
 
-    spark.sql("delete from result_branchidle where input_date = " + calcuDate)
+    spark.sql("delete from bigdata.result_branchidle where input_date = " + calcuDate)
 
     spark.sql(
       s"""
@@ -182,16 +202,16 @@ class CapitaIdleRate {
          | ,remotemed_idlerate
          | ,input_date
          | )
-         | select   round(avg(approch_idle_rate),4) , round(median(approch_idle_rate),4),
-         |         -1, round(avg(remote_idle_rate),4) ,
-         |      round(median(remote_idle_rate),4), ${calcuDate} input_date
+         | select   round(avg(approch_idle_rate),4)  approavg_idlerate , round(median(approch_idle_rate),4) appromed_idlerate,
+         |         -1 branch_no , round(avg(remote_idle_rate),4)  remoteavg_idlerate,
+         |      round(median(remote_idle_rate),4) remotemed_idlerate, ${calcuDate} input_date
          |  from  capitalIdalRateTmp
          |  where input_date = ${calcuDate}
          | union
-         | select  round(avg(approch_idle_rate),4)
-         |    ,round(median(approch_idle_rate),4)
-         |    ,branch_no, round(avg(remote_idle_rate),4) ,
-         |  round(median(remote_idle_rate),4) , ${calcuDate} input_date
+         | select  round(avg(approch_idle_rate),4) approavg_idlerate
+         |    ,round(median(approch_idle_rate),4) appromed_idlerate
+         |    ,branch_no, round(avg(remote_idle_rate),4)  remoteavg_idlerate,
+         |  round(median(remote_idle_rate),4) remotemed_idlerate , ${calcuDate} input_date
          | from capitalIdalRateTmp
          | where  input_date = ${calcuDate}  group by branch_no
        """.stripMargin)
@@ -200,4 +220,11 @@ class CapitaIdleRate {
 
   }
 
+}
+
+object CapitaIdleRate
+{
+  def main(args: Array[String]): Unit = {
+    new CapitaIdleRate().capitaIdleRate(20190401,1,3)
+  }
 }

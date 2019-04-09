@@ -29,21 +29,23 @@ class BankBondCalculte {
     val approchMonthsVal:Int = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -approchMonths))
     val remoteMonthsVal:Int = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -remoteMonths))
 
-    spark.sql("create  table  IF NOT EXISTS  banktransfer_tb ( " +
-      " c_custno string, client_id string, curr_date int, bktrans_status string, trans_type string, occur_balance double  ) " +
-      " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
-      " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
-      " map keys terminated by ':' " +
+//    spark.sql("drop table if exists bigdata.banktransfer_tb ")
+    spark.sql("create  table  IF NOT EXISTS  bigdata.banktransfer_tb ( " +
+      " c_custno string, client_id int, curr_date int, bktrans_status string, trans_type string, occur_balance double  ) " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")
 
-    spark.sql("into overwrite banktransfer_tb (c_custno, client_id, curr_date, bktrans_status, trans_type, occur_balance) " +
+    spark.sql("insert overwrite  table bigdata.banktransfer_tb (c_custno, client_id, curr_date, bktrans_status, trans_type, occur_balance) " +
       " select c_custno, a.client_id, nvl(curr_date,0) curr_date, nvl(bktrans_status,'0') bktrans_status , " +
       " nvl(trans_type, '0') trans_type , nvl(occur_balance, '0') occur_balance " +
-      " from global_temp.c_cust_branch_tb a " +
+      " from bigdata.c_cust_branch_tb a " +
       " left outer join (select client_id, curr_date, bktrans_status, trans_type, occur_balance " +
       "    from bigdata.hs08_his_banktransfer where bktrans_status = '2' and trans_type in ('01', '02') " +
       "  and curr_date < "+calcuDate+" " +
       "  and curr_date >= "+remoteMonthsVal+") b on  a.client_id = b.client_id " )
+
     //计算较短时间内的转入金额/转入笔数、
     val inApproBalanceDF = spark.sql("select client_id, count(client_id) appro_in_frequency, sum(occur_balance) appro_in_sum " +
       " from banktransfer_tb where trans_type = '01' and curr_date >= "+approchMonthsVal+" group by client_id")
@@ -59,6 +61,7 @@ class BankBondCalculte {
     val outApproBalanceDF = spark.sql("select client_id, count(client_id) appro_out_frequency, sum(occur_balance) appro_out_sum " +
       " from banktransfer_tb where trans_type = '02' and curr_date >= "+approchMonthsVal+" group by client_id ")
     outApproBalanceDF.createOrReplaceTempView("outApproBalanceTmp")
+
     //计算较长时间内的转出金额/转出笔数
     val outRemotBalanceDF = spark.sql("select client_id, count(client_id) remot_out_frequency, sum(occur_balance) remot_out_sum " +
       " from banktransfer_tb where trans_type = '02'  group by client_id ")
@@ -67,14 +70,14 @@ class BankBondCalculte {
     val monthDvalue = remoteMonths / approchMonths
 
     spark.sql("create  table  IF NOT EXISTS  bigdata.banktransfer_result_tb (" +
-      " c_custno string, branch_no string, client_id, appro_in_frequency int, appro_out_frequency int, appro_frequency_dvalue int, " +
+      " c_custno string, branch_no string, client_id int, appro_in_frequency int, appro_out_frequency int, appro_frequency_dvalue int, " +
       " appro_in_sum double, appro_out_sum double, appro_sum_dvalue double, remote_in_frequency int, remot_out_frequency int, " +
       " remot_frequency_dvalue int, remot_in_sum double, remot_out_sum double , remot_sum_dvalue  double , in_frequency_tendency double, " +
       " out_frequency_tendency double, in_sum_tendency double, out_sum_tendency double, frequency_dvalue_tendency double, " +
       " sum_dvalue_tendency double, input_date int  )" +
-      " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
-      " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
-      " map keys terminated by ':' " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")
 
     spark.sql("delete from bigdata.banktransfer_result_tb where input_date = "+calcuDate+"")
@@ -131,9 +134,9 @@ class BankBondCalculte {
         |     case when remot_out_sum =0 then 0 else appro_out_sum * (${monthDvalue} ) / remot_out_sum end out_sum_tendency,
         |     case when remot_frequency_dvalue =0 then 0 else appro_frequency_dvalue * (${monthDvalue}) / remot_frequency_dvalue end frequency_dvalue_tendency,
         |     case when remot_sum_dvalue =0 then 0 else appro_sum_dvalue * (${monthDvalue}) / remot_sum_dvalue end sum_dvalue_tendency
-        |        from
-        |            (select  c_custno,
-        |             branch_no,
+        |    from
+        |      (select  c_custno,
+        |     branch_no,
         |    g.client_id,
         |    nvl(appro_in_frequency,0) appro_in_frequency,
         |    nvl(appro_out_frequency,0) appro_out_frequency,
@@ -157,7 +160,7 @@ class BankBondCalculte {
         |        remot_out_sum,
         |        appro_in_frequency,
         |        appro_in_sum
-        | from
+        |    from
         |     (select  c_custno,
         |             branch_no,
         |            c.client_id,
@@ -165,21 +168,21 @@ class BankBondCalculte {
         |            remot_in_sum,
         |            remot_out_frequency,
         |            remot_out_sum
-        |     from
+        |         from
         |           (select  c_custno,
         |    a.branch_no,
         |   a.client_id,
         |   remote_in_frequency,
         |   remot_in_sum
-        |           from c_cust_no_tb a
+        |           from bigdata.c_cust_branch_tb a
         |      left outer join ( inRemotBalanceTmp ) b on a.client_id = b.client_id) c
         |     left outer join ( outRemotBalanceTmp ) d on c.client_id = d.client_id) e
         |    left outer join ( inAqpproBalanceTmp) f on e.client_id = f.client_id) g
-        |    left outer join ( outAqpproBalanceTmp) h  on g.client_id = h.client_id))
+        |    left outer join ( outAqpproBalanceTmp) h  on g.client_id = h.client_id) h ) i
       """.stripMargin)
 
     spark.sql(s"""create  table  IF NOT EXISTS  bigdata.result_branchbanktransfer ( " +
-                 |   branch_no int
+                 |   branch_no string
                  | ,appro_avginsum double
                  | ,appro_avgoutsum double
                  | ,appro_avginfrequ double
@@ -216,12 +219,17 @@ class BankBondCalculte {
                  | ,remo_medoutfrequ double
                  | ,remo_medsumdvalue double
                  | ,remo_medfrequdvalue double
-                 | ,input_date int ) """.stripMargin)
+                 | ,input_date int
+                 | ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"}
+                 | LINES TERMINATED BY ${raw"'\n’"}
+                 |
+                 |  stored as textfile
+                 | ) """.stripMargin)
 
     spark.sql("delete  from result_branchbanktransfer  where input_date = "+calcuDate)
     spark.sql(
       s"""
-        | insert  into result_branchbanktransfer(
+        | insert  into  bigdata.result_branchbanktransfer(
         |   branch_no
         | ,appro_avginsum
         | ,appro_avgoutsum
@@ -299,8 +307,8 @@ class BankBondCalculte {
         |    , round(median(remot_out_frequency)  ,4)
         |    , round(median(remot_sum_dvalue)  ,4)
         |    , round(median(remot_frequency_dvalue),4)
-        |     ,calcu_date
-        |    from banktransfer_result_tb  where input_date= ${calcuDate}
+        |     ,${calcuDate} input_date
+        |    from bigdata.banktransfer_result_tb  where input_date= ${calcuDate}
         | union
         | select
         |     branch_no
@@ -340,15 +348,15 @@ class BankBondCalculte {
         |     ,median(remot_out_frequency)
         |     ,median(remot_sum_dvalue)
         |     ,median(remot_frequency_dvalue)
-        |     ,calcu_date
+        |     ,${calcuDate} input_date
         |	 from banktransfer_result_tb where input_date= ${calcuDate}  group by branch_no
       """.stripMargin)
 
-    spark.sql("delete   from  result_banktranrk  where input_date = "+calcuDate)
+    spark.sql("delete   from  bigdata.result_banktranrk  where input_date = "+calcuDate)
 
     spark.sql(
       s"""
-         | insert  into result_banktranrk (
+         | insert  into bigdata.result_banktranrk (
          |     c_custno,
          |    branch_no,
          |    supercom_apprinsum
@@ -448,12 +456,20 @@ class BankBondCalculte {
          | ,dense_rank() over(partition by branch_no  order by out_frequency_tendency  desc)    superbra_outfreten
          | ,dense_rank() over(partition by branch_no  order by sum_dvalue_tendency  desc)       superbra_sumdvaten
          | ,dense_rank() over(partition by branch_no  order by frequency_dvalue_tendency  desc) superbra_fredvaten
-         | from banktransfer_result_tb where input_date= ${calcuDate} )a
-         | left join (select   count(*) branchallcount ,branch_no from global_temp.c_cust_branch_tb
+         | from bigdata.banktransfer_result_tb where input_date= ${calcuDate} )a
+         | left join (select   count(*) branchallcount ,branch_no from bigdata.c_cust_branch_tb
          | group by branch_no  ) b on a.branch_no = b.branch_no
        """.stripMargin)
+
     spark.stop()
 
   }
 
+}
+object BankBondCalculte
+{
+  def main(args: Array[String]): Unit = {
+    new BankBondCalculte().bankBondCalculte(20190401, 1,3)
+
+  }
 }

@@ -29,33 +29,35 @@ class TradingFrequency {
     val approchMonthsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -approchMonths))
     val remoteMonthsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -remoteMonths))
 
+    println("approchMonthsVal:"+approchMonthsVal)
+    println("remoteMonthsVal:"+remoteMonthsVal)
+
+
     spark.sql("use bigdata")
 
+    spark.sql("drop table if exists bigdata."+tableName)
     spark.sql("create table IF NOT EXISTS bigdata." + tableName +
       " ( c_custno string, appro_months_count double, " +
       " remo_months_count double, frequency_tendency double, branch_no string ) " +
-      " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
-      " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
-      " map keys terminated by ':' " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+      s" LINES TERMINATED BY ${raw"'\n'"}" +
       " stored as textfile ")
 
     val approMonthsAmountDF = spark.sql("select c_custno, count(c_custno) as appro_months_count " +
       " from bigdata." + dataSourTab +
-      " where c_custno in (select c_custno from  global_temp." + targetCustTab + " ) " +
+      " where c_custno in (select c_custno from  " + targetCustTab + " ) " +
       " and l_date <  " + calcuDate +
       " and l_date >=  " + approchMonthsVal +
-      " groupu by c_custno "
+      " group by c_custno "
     )
-
     approMonthsAmountDF.createOrReplaceTempView("approMonthsAmountTmp")
 
-
-    val remoMonthsAmountDF = spark.sql("select c_custno, count(c_custno) as appro_months_count " +
+    val remoMonthsAmountDF = spark.sql("select c_custno, count(c_custno) as remo_months_count " +
       " from bigdata." + dataSourTab +
-      " where c_custno in (select c_custno from  global_temp." + targetCustTab + " ) " +
+      " where c_custno in (select c_custno from  " + targetCustTab + " ) " +
       " and l_date <  " + calcuDate +
       " and l_date >=  " + remoteMonthsVal +
-      " groupu by c_custno "
+      " group by c_custno "
     )
     remoMonthsAmountDF.createOrReplaceTempView("remoMonthsAmountTmp")
 
@@ -63,13 +65,13 @@ class TradingFrequency {
       " (case when remo_months_count = 0 then 0 else " +
       " appro_months_count * (" + remoteMonths + " / " + approchMonths + " ) " +
       " / remo_months_count end ) as frequency_tendency, branch_no " +
-      " from ( select a.c_custno as c_custno, " +
-      " (case when appro_months_count is null then 0 else appro_months_count end ) as appro_months_count, " +
-      " (case when remo_months_count is null then 0 else remo_months_count end ) as remo_months_count , " +
+      " from ( select a.c_custno , " +
+      " nvl( appro_months_count,0 ) as appro_months_count, " +
+      " nvl( remo_months_count,0) as remo_months_count , " +
       " branch_no from " +
-      " ( select c_custno, branch_no from global_temp." + targetCustTab + " ) a " +
+      " ( select c_custno, branch_no from " + targetCustTab + " ) a " +
       " left outer join remoMonthsAmountTmp  b on a.c_custno = b.c_custno " +
-      " left outer join approMonthsAmountTmp  c on a.c_custno = c.c_custno )")
+      " left outer join approMonthsAmountTmp  c on a.c_custno = c.c_custno ) d ")
 
     frequencyTradingDF.createOrReplaceTempView("frequencyTradingTmp")
 
@@ -85,7 +87,7 @@ object TradingFrequency {
 
   def main(args: Array[String]): Unit = {
 
-//    new TradingFrequency().tradingFrequency("")
+    new TradingFrequency().tradingFrequency(20190401, 1,3,"frequency_trading","trade_get_data","c_cust_branch_tb")
 
   }
 

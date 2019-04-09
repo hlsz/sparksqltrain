@@ -29,7 +29,7 @@ class ConstantAggreateRank {
       s"""
          | create  table  IF NOT EXISTS  bigdata.custresult_aggreatecol
          |   (c_custno string,
-         |	branch_no int,
+         |	branch_no string,
          |	appro_months_amount double ,
          |	remo_months_amount double ,
          |	amount_tendency double ,
@@ -138,9 +138,9 @@ class ConstantAggreateRank {
          |	superappro_branchassetrate double,
          |	assetrate_trentency double
          |   )
-         |    ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-         | LINES TERMINATED BY ‘\n’ collection items terminated by '-'
-         | map keys terminated by ':'
+         |    ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"}
+         | LINES TERMINATED BY ${raw"'\n’"}
+         |
          | stored as textfile
        """.stripMargin)
     spark.sql("delete from  bigdata.custresult_aggreatecol where input_date = "+ inputDate)
@@ -486,4 +486,11 @@ class ConstantAggreateRank {
 
   }
 
+}
+
+object ConstantAggreateRank
+{
+  def main(args: Array[String]): Unit = {
+    new ConstantAggreateRank().constantAggreateRank(20190410)
+  }
 }

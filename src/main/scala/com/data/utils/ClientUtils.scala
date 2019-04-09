@@ -21,8 +21,8 @@ object ClientUtils {
     */
     def initConfiguration(): Configuration = {
         val configuration = new Configuration
-        configuration.addResource(this.getClass().getResourceAsStream("src/Resources/hdfs-client-kb/core-site.xml"))
-        configuration.addResource(this.getClass().getResourceAsStream("src/Resources/hdfs-client-kb/hdfs-site.xml"))
+        configuration.addResource(this.getClass().getResourceAsStream("src/Resources/dev-kb-conf/core-site.xml"))
+        configuration.addResource(this.getClass().getResourceAsStream("src/Resources/dev-kb-conf/hdfs-site.xml"))
         configuration
     }
 

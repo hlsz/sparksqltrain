@@ -31,32 +31,31 @@ class CalculateData {
 
     val branchCustCountDF = spark.sql("select branch_no, count(c_custno) as c_cust_count " +
       " from "+branchCustTb+" group by branch_no ")
-
     branchCustCountDF.createOrReplaceTempView("branchCustCountTmp")
 
     spark.sql(" create table IF NOT EXISTS  bigdata.cal_data_tb ( " +
       " c_custno string, branch_no string, appro_months_amount double, remo_months_amount double," +
       " amount_tendency double, appro_months_count double, remo_months_count double, " +
-      " frequency_tendency double, l_date int, c_businessflag string, c_remark string, " +
+      " frequency_tendency double, l_date int, c_businessflag string,  " +
       " lastdate_dvalue int, f_fare0_approch double, f_fare0_remote double, f_fare0_tendency double, " +
       " open_date  int, open_date_dvalue int, organ_flag string, peak_vasset double, insert_date int, input_date int   )" +
-      " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
-      " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
-      " map keys terminated by ':' " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")
 
     val calDataDF = spark.sql("select k.*, nvl(l.peak_vasset,0) as peak_vasset ,"+currentDate+" as insert_date, "+inputDate +" inputdate " +
       " from  ( select i.c_custno, i.branch_no, nvl(appro_months_amount,0) as appro_months_amount , " +
       " nvl(remo_months_amount,0) as remo_months_amount, nvl(amount_tendency,0) as amount_tendency ," +
       " nvl(appro_months_count,0) as appro_months_count, nvl(remo_months_count,0) as remo_months_count, " +
-      " nvl(frequency_tendency,0) as frequency_tendency, l_date, c_businessflag, c_remark, lastdate_dvalue, " +
+      " nvl(frequency_tendency,0) as frequency_tendency, l_date, c_businessflag,  lastdate_dvalue, " +
       " nvl(f_fare0_approch,0) as f_fare0_approch, nvl(f_fare0_remote, 0) as f_fare0_remote, " +
       " nvl(f_fare0_tendency,0) as f_fare0_tendency , open_date, open_date_dvalue, organ_flag " +
       " from (select g.*, f_fare0_approch, f_fare0_remote, f_fare0_tendency  " +
-      "       from ( select e.*, f.l_date, f.c_businessflag, f.c_remark, f_lastdate_dvalue " +
+      "       from ( select e.*, f.l_date, f.c_businessflag,  f.lastdate_dvalue " +
       "            from (select c.*, appro_months_count, remo_months_count, frequency_tendency " +
-      "                  from (select a.c_custno, a.branch_no, a.organ_flag, appro_months_amount, remo_months_amout, amount_tendency " +
-      "                      from global_temp."+branchCustTb+" a " +
+      "                  from (select a.c_custno, a.branch_no, a.organ_flag, appro_months_amount, remo_months_amount, amount_tendency " +
+      "                      from "+branchCustTb+" a " +
       "                      left join "+amountTransacTb+" b on a.c_custno = b.c_custno) c " +
       "                  left join "+frequencyTradeTb+" d  on c.c_custno = d.c_custno ) e " +
       "            left join "+lastTradeTimeTb+" f on e.c_custno = f.c_custno) g " +
@@ -66,15 +65,17 @@ class CalculateData {
 
     calDataDF.createOrReplaceTempView("calDataTmp")
 
-    val custnoCount = spark.sql("select count(1) cnt from calDataTmp where input_date = " + inputDate)
+    val custnoCountRDD = spark.sql("select c_custno from calDataTmp where input_date = " + inputDate)
+    val custnoCount = custnoCountRDD.count().toInt
 
+    spark.sql("delete from bigdata.cal_date_tb  where input_date = "+ inputDate )
     spark.sql("insert into bigdata.cal_date_tb select * from calDataTmp ")
 
     val branchAvgMedDF = spark.sql(" select a.branch_no, " +
       "  appro_amount_avg, remo_amount_avg, amount_tend_avg, appro_count_avg, remo_count_avg, " +
       " frequency_tend_avg, last_dv_avg,appro_fare0_avg, remo_fare0_avg, fare0_tend_avg,open_d_dvalue_avg, " +
-      " appro_amount_med, remo_amount_med, amount_tend_med, appro_count_med, remo_count_med, " +
-      " frequency_tend_med, last_dv_med, appro_fare0_med,remo_fare0_med, fare0_tend_med, open_d_dvalue_med " +
+      " peak_vasset_avg, appro_amount_med, remo_amount_med, amount_tend_med, appro_count_med, remo_count_med, " +
+      " frequency_tend_med, last_dv_med, appro_fare0_med,remo_fare0_med, fare0_tend_med, open_d_dvalue_med, peak_vasset_med " +
       " from (select 'ALL' branch_no, " +
       " avg(appro_months_amount) as appro_amount_avg , " +
       " avg(remo_months_amount) as remo_amount_avg, " +
@@ -85,7 +86,8 @@ class CalculateData {
       " avg(f_fare0_approch) appro_fare0_avg, " +
       " avg(f_fare0_remote) remo_fare0_avg, " +
       " avg(f_fare0_tendency) fare0_tend_avg, " +
-      " avg(open_date_dvalue) open_d_dvalue_avg, " +
+      " avg(open_date_dvalue) open_d_dvalue_avg," +
+      " avg(peak_vasset) peak_vasset_avg,  " +
       " median(appro_months_amount) as appro_amount_med , " +
       " median(remo_months_amount) as remo_amount_med, " +
       " median(amount_tendency) amount_tend_med, " +
@@ -95,7 +97,8 @@ class CalculateData {
       " median(f_fare0_approch) appro_fare0_med, " +
       " median(f_fare0_remote) remo_fare0_med, " +
       " median(f_fare0_tendency) fare0_tend_med, " +
-      " median(open_date_dvalue) open_d_dvalue_med " +
+      " median(open_date_dvalue) open_d_dvalue_med ," +
+      " median(peak_vasset) peak_vasset_med " +
       "  from ( select c_custno, branch_no, " +
       "        nvl(appro_months_amount, 0) appro_months_amount, " +
       "         nvl(remo_months_amount,0) remo_months_amount , " +
@@ -109,7 +112,7 @@ class CalculateData {
               " nvl(open_date_dvalue,0) open_date_dvalue " +
               " from bigdata.cal_data_tb t where input_date = " +inputDate+" ) " +
       " group by branch_no ) a " +
-      " left outer join (select 'ALL' branch_no, avg(lastdate_dvalue) last_dv_avg, median(lastdate_dvalue) last_dv_med " +
+      " left outer join (select  branch_no, avg(lastdate_dvalue) last_dv_avg, median(lastdate_dvalue) last_dv_med " +
       "  from cal_data_tb where lastdate_dvalue != -1 and input_date =  "+ inputDate +
       "  group by branch_no ) b  on a.branch_no = b.branch_no ")
     branchAvgMedDF.createOrReplaceTempView("branchAvgMedTmp")
@@ -118,9 +121,9 @@ class CalculateData {
     val allAvgMedDF = spark.sql(" select a.branch_no, " +
       " appro_amount_al_avg, remo_amount_al_avg, amount_tend_al_avg, appro_count_al_avg, remo_count_al_avg, " +
       " frequency_tend_al_avg, last_dv_al_avg,appro_fare0_al_avg, remo_fare0_al_avg, fare0_tend_al_avg, " +
-      " open_d_dvalue_al_avg, appro_amount_al_med, remo_amount_al_med, amount_tend_al_med, appro_count_al_med, " +
+      " open_d_dvalue_al_avg, peak_vasset_avg, appro_amount_al_med, remo_amount_al_med, amount_tend_al_med, appro_count_al_med, " +
       " remo_count_al_med, frequency_tend_al_med, last_dv_al_med, appro_fare0_al_med,remo_fare0_al_med, " +
-      " fare0_tend_al_med, open_d_dvalue_al_med " +
+      " fare0_tend_al_med, open_d_dvalue_al_med , peak_vasset_med" +
       " from (select 'ALL' branch_no, " +
       " avg(appro_months_amount) as appro_amount_al_avg , " +
       " avg(remo_months_amount) as remo_amount_al_avg, " +
@@ -131,7 +134,8 @@ class CalculateData {
       " avg(f_fare0_approch) appro_fare0_al_avg, " +
       " avg(f_fare0_remote) remo_fare0_al_avg, " +
       " avg(f_fare0_tendency) fare0_tend_al_avg, " +
-      " avg(open_date_dvalue) open_d_dvalue_al_avg, " +
+      " avg(open_date_dvalue) open_d_dvalue_al_avg," +
+      " avg(peak_vasset) peak_vasset_avg ,  " +
       " median(appro_months_amount) as appro_amount_al_med , " +
       " median(remo_months_amount) as remo_amount_al_med, " +
       " median(amount_tendency) amount_tend_al_med, " +
@@ -141,7 +145,8 @@ class CalculateData {
       " median(f_fare0_approch) appro_fare0_al_med, " +
       " median(f_fare0_remote) remo_fare0_al_med, " +
       " median(f_fare0_tendency) fare0_tend_al_med, " +
-      " median(open_date_dvalue) open_d_dvalue_al_med " +
+      " median(open_date_dvalue) open_d_dvalue_al_med ," +
+      " median(peak_vasset) peak_vasset_med " +
       " from ( select c_custno, branch_no, " +
                    " nvl(appro_months_amount, 0) appro_months_amount, " +
                     " nvl(remo_months_amount,0) remo_months_amount , " +
@@ -152,7 +157,8 @@ class CalculateData {
                     " nvl(f_fare0_approch,0) f_fare0_approch ," +
                     " nvl(f_fare0_remote,0) f_fare0_remote, " +
                     " nvl(f_fare0_tendency,0) f_fare0_tendency, " +
-                    " nvl(open_date_dvalue,0) open_date_dvalue " +
+                    " nvl(open_date_dvalue,0) open_date_dvalue, " +
+                    " nvl(peak_vasset,0) peak_vasset " +
                     " from cal_data_tb t  where input_date = "+inputDate+") " +
       " group by branch_no ) a " +
       " left outer join (select 'ALL' branch_no, avg(lastdate_dvalue) last_dv_al_avg, median(lastdate_dvalue) last_dv_al_med " +
@@ -189,12 +195,12 @@ class CalculateData {
     allPeakVassetRankDF.createOrReplaceTempView("allPeakVassetRankTmp")
 
     //计算客户最近一次交易时间在营业部的排名
-    val bLstTradeDtRankDF = spark.sql("select t.branch_no,c_custno, l_date, c_bussinessflag, c_remark, " +
+    val bLstTradeDtRankDF = spark.sql("select t.branch_no,c_custno, l_date, c_bussinessflag,   " +
       " lastdate_dvalue, (case when l_date = 0 and lastdate_dvalue = 100 the  -1 " +
       " when l_date = 0 and lastdate_dvalue  = 200 the  -1   " +
       " when l_date = 0 and lastdate_dvalue  = 400 the  -1" +
       " else round((c_custno_count - rk)  * 100 / c_cust_count ,4) end rak " +
-      " from (select c_custno, branch_no, l_date, c_businessflag, c_remark, lastdate_dvalue, " +
+      " from (select c_custno, branch_no, l_date, c_businessflag,   lastdate_dvalue, " +
       "     dense_rank() over (partition by branch_no order by lastdate_davalue asc ) rk " +
       "   from cal_data_tb " +
       "   where input_date = "+inputDate+") a " +
@@ -236,12 +242,12 @@ class CalculateData {
       "     from (select c_custno, branch_no, appro_months_count frequency_tendency from cal_data_tb where input_date= "+inputDate+"))")
     allTradeFrRankDF.createOrReplaceTempView("allTradeFrRankTmp")
     //计算客户最近一次交易时间在全部客户中的排名
-    val allLstTradeDtRankDF = spark.sql("select t.branch_no,c_custno, l_date, c_bussinessflag, c_remark, " +
+    val allLstTradeDtRankDF = spark.sql("select t.branch_no,c_custno, l_date, c_bussinessflag,  " +
       " lastdate_dvalue, (case when l_date = 0 and lastdate_dvalue = 100 the  -1 " +
       " when l_date = 0 and lastdate_dvalue  = 200 the  -1   " +
       " when l_date = 0 and lastdate_dvalue  = 400 the  -1" +
       " else round((c_custno_count - rk)  * 100 / c_cust_count ,4) end rak " +
-      " from (select c_custno, branch_no, l_date, c_businessflag, c_remark, lastdate_dvalue, " +
+      " from (select c_custno, branch_no, l_date, c_businessflag,  lastdate_dvalue, " +
       "     dense_rank() over (order by lastdate_davalue asc ) rk " +
       "   from cal_data_tb where input_date = "+inputDate+") a " +
       " left join cal_data_tb t on a.branch_no = t.branch_no ")
@@ -276,21 +282,23 @@ class CalculateData {
       " frequency_tend_avg double, last_dv_avg double, " +
       " appro_fare0_avg double, remo_fare0_avg double, " +
       " fare0_tend_avg double, open_d_dvalue_avg double, " +
+      " peak_vasset_avg double, " +
       " appro_amount_med double, remo_amount_med double, " +
       " amount_tend_med double, appro_count_med double, " +
       " remo_count_med double, frequency_tend_med double, " +
       " last_dv_med double, appro_fare0_med double," +
       " remo_fare0_med double, fare0_tend_med double, " +
-      " open_d_dvalue_med double, insert_date int , input_date int) " +
-      " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
-      " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
-      " map keys terminated by ':' " +
+      " open_d_dvalue_med double, peak_vasset_med double, " +
+      " insert_date int , input_date int ) " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile " )
 
     spark.sql("insert overwrite table  bigdata.b_all_avg_med_tb ( branch_no, appro_amount_avg, remo_amount_avg," +
       "     amount_tend_avg, appro_count_avg, remo_count_avg, frequency_tend_avg, last_dv_avg, appro_fare0_avg, remo_fare0_avg, " +
-      "     fare0_tend_avg, open_d_dvalue_avg, appro_amount_med, remo_amount_med,amount_tend_med, appro_count_med, remo_count_med, " +
-      "     frequency_tend_med, last_dv_med, appro_fare0_med, remo_fare0_med, fare0_tend_med, open_d_dvalue_med, insert_date)" +
+      "     fare0_tend_avg, open_d_dvalue_avg, peak_vasset_avg, appro_amount_med, remo_amount_med,amount_tend_med, appro_count_med, remo_count_med, " +
+      "     frequency_tend_med, last_dv_med, appro_fare0_med, remo_fare0_med, fare0_tend_med, open_d_dvalue_med, peak_vasset_med, insert_date)" +
       " select branch_no, appro_amount_avg, remo_amount_avg, amount_tend_avg, appro_count_avg, remo_count_avg, " +
       " frequency_tend_avg, last_dv_avg, appro_fare0_avg, remo_fare0_avg, fare0_tend_avg, open_d_dvalue_avg, " +
       " appro_amount_med, remo_amount_med,amount_tend_med, appro_count_med, remo_count_med, frequency_tend_med, " +
@@ -300,8 +308,8 @@ class CalculateData {
 
     spark.sql("insert overwrite  table  bigdata.b_all_avg_med_tb ( branch_no, appro_amount_avg, remo_amount_avg," +
       "     amount_tend_avg, appro_count_avg, remo_count_avg, frequency_tend_avg, last_dv_avg, appro_fare0_avg, remo_fare0_avg, " +
-      "     fare0_tend_avg, open_d_dvalue_avg, appro_amount_med, remo_amount_med,amount_tend_med, appro_count_med, remo_count_med, " +
-      "     frequency_tend_med, last_dv_med, appro_fare0_med, remo_fare0_med, fare0_tend_med, open_d_dvalue_med, insert_date)" +
+      "     fare0_tend_avg, open_d_dvalue_avg,peak_vasset_avg, appro_amount_med, remo_amount_med,amount_tend_med, appro_count_med, remo_count_med, " +
+      "     frequency_tend_med, last_dv_med, appro_fare0_med, remo_fare0_med, fare0_tend_med, open_d_dvalue_med,peak_vasset_med, insert_date)" +
       " select branch_no,   appro_amount_al_avg, remo_amount_al_avg, amount_tend_al_avg, appro_count_al_avg, remo_count_al_avg, " +
       " frequency_tend_al_avg, last_dv_al_avg,appro_fare0_al_avg, remo_fare0_al_avg, fare0_tend_al_avg, " +
       " open_d_dvalue_al_avg, appro_amount_al_med, remo_amount_al_med, amount_tend_al_med, appro_count_al_med, " +
@@ -315,9 +323,9 @@ class CalculateData {
       " trade_all_frequency_rank double, last_all_trade_time_rank double, fare0_all_tend_rank double, open_date_all_rank double, " +
       " fare0_b_rank double, fare0_all_rank double, peakasset_b_rank double, peakasset_all_rank double " +
       " insert_date int , input_date int )  " +
-      " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
-      " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
-      " map keys terminated by ':' " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")
 
     spark.sql("insert into  bigdata.client_rank_tb ( " +
@@ -325,7 +333,7 @@ class CalculateData {
       " open_data_b_rank, trade_all_amount_rank, trade_all_frequency_rank, last_all_trade_time_rank, fare0_all_tend_rank," +
       " open_date_all_rank, fare0_b_rank, fare0_all_rank, peakasset_b_rank, peakasset_all_rank, " +
       " insert_date , input_date ) " +
-      " select b.c_custno,b.branch_no, b.rak, c.rak, d.rak, e.rak, j.rak,f.rak,g.rak, h.rak, i.rak, k.rak , l.rak,m.rak,n.rak,o.rak, " +
+      " select b.c_custno,b.branch_no, b.rak, c.rak, d.rak, e.rak, j.rak,f.rak,g.rak, h.rak, i.rak, k.rak , m.rak,o.rak,l.rak,n.rak, " +
       currentDate+"  insert_date , " +inputDate + " input_date " +
       " from bTradeAmRankTmp b  " +
       " left outer join bTradeFrRankTmp c on b.c_custno = c.c_custno " +
@@ -349,5 +357,12 @@ class CalculateData {
 }
 
 object CalculateData {
+  def main(args: Array[String]): Unit = {
+
+    new CalculateData().calculateData("c_cust_branch_tb", "frequency_trading", "amount_transaction",
+    "trade_time_last","trend_dedicate","open_date_tb","peak_vasset_tb",20190401)
+
+
+  }
 
 }

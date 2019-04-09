@@ -26,7 +26,7 @@ class ConstBranchValue {
     spark.sql(
       s"""
          | create  table  IF NOT EXISTS   bigdata.result_branchavgmed
-         |   (	branch_no int,
+         |   (	branch_no string,
          |	app_avgstocknum double,
          |	app_medstocknum double,
          |	app_avgprice double,
@@ -121,9 +121,9 @@ class ConstBranchValue {
          |	peak_vasset_med double,
          |	avg_assetrate double,
          |	med_assetrate double  )
-         | ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-         | LINES TERMINATED BY ‘\n’ collection items terminated by '-'
-         | map keys terminated by ':'
+         | ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"}
+         | LINES TERMINATED BY ${raw"'\n’"}
+         |
          | stored as textfile
        """.stripMargin  )
 
@@ -227,7 +227,6 @@ class ConstBranchValue {
          |	,med_assetrate
          |	,INSERT_DATE
          |	,INPUT_DATE)
-         |
          |		 select
          |		  a.branch_no ,
          |		  a.avgappro_stocknum,
@@ -329,26 +328,34 @@ class ConstBranchValue {
          |			  left  join resultappro_branchdeciaml d  on d.branch_no = a.branch_no
          |			  left  join branch_traderate e  on e.branch_no = a.branch_no
          |			  left  join result_branchdeciaml f  on f.branch_no = a.branch_no
-         |			  left  join (  select  case when a.branch_no = 'ALL' then -1 else a.branch_no end  branchno,a.*
+         |			  left  join ( select  case when a.branch_no = 'ALL' then -1 else a.branch_no end  branchno,a.*
          |			  from  b_all_avg_med_tb  a) h  on h.branchno = a.branch_no
          |			  left join result_branchidle i on i.branch_no= a.branch_no
          |			  left join result_branchbanktransfer j on j.branch_no= a.branch_no
          |			  left join result_branchage k on k.branch_no =  a.branch_no
          |			  left join result_branchtrunover l on l.branch_no = a.branch_no
-         |				where a.input_date =inputdate
-         |			   and b.input_date =inputdate
-         |			   and  c.input_date =inputdate
-         |			   and  d.input_date =inputdate
-         |			   and  e.input_date =inputdate
-         |			   and  f.input_date =inputdate
-         |			   and h.input_date =inputdate
-         |			   and i.input_date =inputdate
-         |				 and j.input_date =inputdate
-         |				 and k.input_date =inputdate
-         |				 and l.input_date =inputdate
+         |				where a.input_date =${inputDate}
+         |			   and b.input_date =${inputDate}
+         |			   and  c.input_date =${inputDate}
+         |			   and  d.input_date =${inputDate}
+         |			   and  e.input_date =${inputDate}
+         |			   and  f.input_date =${inputDate}
+         |			   and h.input_date =${inputDate}
+         |			   and i.input_date =${inputDate}
+         |				 and j.input_date =${inputDate}
+         |				 and k.input_date =${inputDate}
+         |				 and l.input_date =${inputDate}
        """.stripMargin)
     spark.stop()
 
   }
 
+}
+object ConstBranchValue
+{
+  def main(args: Array[String]): Unit = {
+
+    new ConstBranchValue().constBranchValue(20190401)
+
+  }
 }

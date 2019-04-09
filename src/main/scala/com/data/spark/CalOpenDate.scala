@@ -28,21 +28,23 @@ class CalOpenDate {
   {
     spark.sql("use bigdata")
 
+    spark.sql("drop table if exists bigdata."+tableName)
     spark.sql(" create table IF NOT EXISTS   bigdata."+ tableName +
       " ( branch_no string, c_custno string, open_date int , open_date_dvalue int) " +
-      " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
-      " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
-      " map keys terminated by ':' " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")
 
 
     val resultDataOpenDF = spark.sql("select branch_no, c_custno, open_date, " +
-      " datediff(" +DateUtils.dateFormat(calDate,"'yyyyMMDD'")+ ", to_date(open_date, 'yyyyMMdd') )" +
+      " datediff( '" +DateUtils.intToDateStr(calDate)+ "' " +
+      " , concat(substr(cast(open_date as string),0,4),'-',substr(cast(open_date as string),5,2),'-',substr(cast(open_date as string),7,2) ) ) " +
       " as open_date_dvalue " +
-      " from global_temp.c_cust_branch_tb ")
+      " from c_cust_branch_tb ")
     resultDataOpenDF.createOrReplaceTempView("resultDataOpenTmp")
 
-    spark.sql("insert overwrite table bigdata."+ tableName +"select * from resultDataOpenTmp ")
+    spark.sql("insert overwrite table bigdata."+ tableName +" select * from resultDataOpenTmp ")
 
     spark.stop()
 
@@ -52,5 +54,8 @@ class CalOpenDate {
 
 object CalOpenDate
 {
-//  new CalOpenDate().calOpenDate(20180903,"open_date_tb")
+  def main(args: Array[String]): Unit = {
+    new CalOpenDate().calOpenDate(20190401,"open_date_tb")
+
+  }
 }

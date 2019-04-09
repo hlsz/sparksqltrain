@@ -28,14 +28,16 @@ class DedicateTrends {
     // addOrMinusDayToLong
     val approchMonthsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -approchMonths))
     val remoteMonthsVal = DateUtils.dateToInt(DateUtils.addMonth(calcDateVal, -remoteMonths))
+    println("approchMonthsVal:"+approchMonthsVal)
+    println("remoteMonthsVal:"+remoteMonthsVal)
 
     spark.sql("use bigdata")
 
+    spark.sql("drop table if exists bigdata."+tableName)
     spark.sql("create  table  IF NOT EXISTS  bigdata."+tableName + " (" +
       " c_custno string, f_fare0_approch double, f_fare0_remote double, f_fare0_tendency double, branch_no string ) " +
-      " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
-      " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
-      " map keys terminated by ':' " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")
 
     val approMonthsAmountDF = spark.sql("select c_custno, sum(nvl(f_fare0,0)) f_fare0  " +
@@ -44,7 +46,7 @@ class DedicateTrends {
       "          when c_moneytype = '1' then f_fare0 * 6.875" +
       "          when c_moneytype = '2' then f_fare0 * 0.8858 end ) as f_fare0 " +
       "      from bigdata." + dataSourTab +" " +
-      "     where c_custno in (select c_custno from global_tmp."+targetCustTab+")" +
+      "     where c_custno in (select c_custno from "+targetCustTab+")" +
       " and l_date >= "+approchMonthsVal+" " +
       " and l_date < "+calcuDate +" ) " +
       " group by c_custno " )
@@ -58,9 +60,9 @@ class DedicateTrends {
       "          when c_moneytype = '1' then f_fare0 * 6.875" +
       "          when c_moneytype = '2' then f_fare0 * 0.8858 end ) as f_fare0 " +
       "      from bigdata." + dataSourTab +" " +
-      "     where c_custno in (select c_custno from global_tmp."+targetCustTab+")" +
+      "     where c_custno in (select c_custno from "+targetCustTab+")" +
       " and l_date >= "+remoteMonthsVal+" " +
-      " and l_date < "+calcuDate +" ) " +
+      " and l_date < "+calcuDate +" ) d " +
       " group by c_custno " )
 
     remoMonthsAmountDF.createOrReplaceTempView("remoMonthsAmountTmp")
@@ -71,9 +73,9 @@ class DedicateTrends {
       " f_fare0_remote end ) as f_fare0_tendency , branch_no " +
       " from (select nvl(a.c_custno,0) as c_custno, nvl(c.f_fare0,0) as f_fare0_approch, nvl(b.f_fare0, 0) as f_fare0_remote ," +
       "  a.branch_no " +
-      "     from (select c_custno, branch_no from global_temp."+targetCustTab+") a " +
+      "     from (select c_custno, branch_no from "+targetCustTab+") a " +
       "     left outer join  remoMonthsAmountTmp b on a.c_custno = b.c_custno " +
-      "     left outer join approMonthsAmountTmp c on a.c_custno = c.c_custno )")
+      "     left outer join approMonthsAmountTmp c on a.c_custno = c.c_custno ) d ")
 
     trendDelicateDF.createOrReplaceTempView("trendDelicateTmp")
 
@@ -87,7 +89,10 @@ class DedicateTrends {
 
 object DedicateTrends {
 
-//  new DedicateTrends().dedicateTrends(20180903, 1, 3, "trend_dedicate", "trade_get_data", "c_cust_branch_tb")
+  def main(args: Array[String]): Unit = {
+    new DedicateTrends().dedicateTrends(20190401, 1, 3, "trend_dedicate", "trade_get_data", "c_cust_branch_tb")
+
+  }
 
 
 }

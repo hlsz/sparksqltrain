@@ -6,7 +6,7 @@ import java.util.{Date, Locale}
 import org.apache.commons.lang3.time.FastDateFormat
 
 object DateUtils {
-
+  //FastDateFormat
   val YYYYMMDDHHMM_TIME_FORMAT = FastDateFormat.getInstance("dd/MM/yyyy:HH:mm:ss Z",Locale.ENGLISH)
 
   val TARGET_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
@@ -21,6 +21,86 @@ object DateUtils {
   val DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
 
   val DATE_FORMAT_CHINESE = "yyyy年M月d日"
+
+
+
+  //    获取今天日期
+  def getNowDate():String={
+    var now:Date = new Date()
+    var  dateFormat = FastDateFormat.getInstance("yyyy-MM-dd")
+    var today = dateFormat.format( now )
+    today
+  }
+
+  //    获取昨天的时间
+  def getYesterday():String= {
+    var dateFormat = FastDateFormat.getInstance("yyyy-MM-dd")
+    var cal = Calendar.getInstance()
+    cal.add(Calendar.DATE, -1)
+    var yesterday = dateFormat.format(cal.getTime())
+    yesterday
+  }
+
+  //    获取本周开始日期
+  def getNowWeekStart():String={
+    var day:String=""
+    var cal:Calendar =Calendar.getInstance();
+    var df =  FastDateFormat.getInstance("yyyy-MM-dd");
+    cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+    //获取本周一的日期
+    day=df.format(cal.getTime())
+    day
+  }
+
+  //    获取本周末日期
+  def getNowWeekEnd():String={
+    var day:String=""
+    var cal:Calendar =Calendar.getInstance();
+    var df = FastDateFormat.getInstance("yyyy-MM-dd");
+    cal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);//这种输出的是上个星期周日的日期，因为老外把周日当成第一天
+    cal.add(Calendar.WEEK_OF_YEAR, 1)// 增加一个星期，才是我们中国人的本周日的日期
+    day=df.format(cal.getTime())
+    day
+  }
+
+  //    本月的第一天
+  def getNowMonthStart():String= {
+    var day: String = ""
+    var cal: Calendar = Calendar.getInstance();
+    var df = FastDateFormat.getInstance("yyyy-MM-dd");
+    cal.set(Calendar.DATE, 1)
+    day = df.format(cal.getTime()) //本月第一天
+    day
+  }
+
+  //    本月最后一天
+  def getNowMonthEnd():String={
+    var day:String=""
+    var cal:Calendar =Calendar.getInstance();
+    var df = FastDateFormat.getInstance("yyyy-MM-dd");
+    cal.set(Calendar.DATE, 1)
+    cal.roll(Calendar.DATE,-1)
+    day=df.format(cal.getTime())//本月最后一天
+    day
+  }
+
+  //    将时间戳转化成日期/时间
+  def DateFormat(time:String):String={
+    var sdf = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
+    var date:String = sdf.format(new Date((time.toLong)))
+    date
+  }
+
+  //    计算时间差
+  def getCoreTime(start_time:String,end_Time:String)={
+    var df = FastDateFormat.getInstance("HH:mm:ss")
+    val begin = start_time
+    val end = end_Time
+    var between = (end.toLong - begin.toLong)/1000  //转化成秒
+    var minute = between % 60 //转化为分钟
+    val hour = between % (60*60) //转化为小时
+  }
+
 
   def dateToLong(date: String): Long ={
     val timeDate: Date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(date)
@@ -40,9 +120,10 @@ object DateUtils {
     dateFormat.parse(str.substring(0,4)+"-"+str.substring(4,6)+"-"+str.substring(6,8))
   }
   def intToDateStr(date: Int): String ={
-    val dateFormat = new SimpleDateFormat(DateUtils.DATE_FORMAT)
-    val str = String.valueOf(date)
-    dateFormat.parse(str.substring(0,4)+"-"+str.substring(4,6)+"-"+str.substring(6,8)).toString
+    val sdf = new SimpleDateFormat(DateUtils.DATE_FORMAT)
+    val dateStr = String.valueOf(date)
+    val datetime = sdf.parse(dateStr.substring(0,4)+"-"+dateStr.substring(4,6)+"-"+dateStr.substring(6,8))
+    sdf.format(datetime.getTime)
   }
 
   def longToDate(dateLong : Long): Date ={
@@ -527,7 +608,7 @@ object DateUtils {
   }
 
   //核心工作时间，迟到早退等的的处理
-  def getCoreTime(start_time:String,end_Time:String)={
+  def getCoreTime2(start_time:String,end_Time:String)={
     var df:SimpleDateFormat=new SimpleDateFormat("HH:mm:ss")
     var begin:Date=df.parse(start_time)
     var end:Date = df.parse(end_Time)

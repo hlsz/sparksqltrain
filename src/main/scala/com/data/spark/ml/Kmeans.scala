@@ -57,8 +57,6 @@ object Kmeans {
       run(parsedData)
 
 
-
-
     //打印出测试数据属于哪个簇
     //println(parsedData.map(v => v.toString() + " belong to cluster :" + clusters.predict(v)).collect().mkString("\n"))
     val writer = new PrintWriter(new File(output))

@@ -27,7 +27,7 @@ class CalculateResultData {
     spark.sql("create  table  IF NOT EXISTS  bigdata.cust_result_info_tb ( " +
       " c_custno string, branch_no string, cust_classify_flag string,  appro_months_amount double, remo_months_amount double, " +
       " amount_tendency double, appro_months_count double, remo_months_count double, frequency_tendency double, l_date int, " +
-      " c_businessflag string, c_remark string, lastdate_dvalue int, f_fare0_approch double, f_fare0_remote double, " +
+      " c_businessflag string,   lastdate_dvalue int, f_fare0_approch double, f_fare0_remote double, " +
       " f_fare0_tendency double, open_date int, open_date_dvalue int, peak_vasset double, insert_date int , " +
       " trade_b_amount_rank double, trade_b_frequency_rank double, " +
       " last_b_trade_rank double, fare0_b_tend_rank double, open_date_b_rank double, trade_all_amount_rank double, " +
@@ -37,9 +37,9 @@ class CalculateResultData {
       " open_d_dvalue_avg double, appro_amount_med double, remo_amount_med double, amount_tend_med double, appro_count_med double, " +
       " remo_count_med double, frequency_tend_med double, last_dv_med double, appro_fare0_med double, remo_fare0_med double, fare0_tend_med double ," +
       " open_d_dvalue_med double  )" +
-      " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
-      " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
-      " map keys terminated by ':' " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")
 
     val custResultInfoDF  = spark.sql("select c.*, d.appro_amount_avg, d.remo_amount_avg, d.amount_tend_avg, d.appro_count_avg, " +
@@ -51,7 +51,7 @@ class CalculateResultData {
             " when peak_vasset >= "+ highasset +" then 2 " +
             " when peak_vasset > "+lowasset +" and peak_vasset < "+highasset+" and f_fare0_approch = 0 then 3  end ) " +
             " cust_classify_flag,  a.appro_months_amount, a.remo_months_amount, a.amount_tendency, " +
-            " a.appro_months_count, a.remo_months_count, a.frequency_tendency, a.l_date, a.c_businessflag, a.c_remark, a.lastdate_dvalue, " +
+            " a.appro_months_count, a.remo_months_count, a.frequency_tendency, a.l_date, a.c_businessflag,  a.lastdate_dvalue, " +
             " a.f_fare0_approch, a.f_fare0_remote, a.f_fare0_ tendency, a.open_date, a.open_date_dvalue, a.peak_vasset, " +
             " a.insert_date, b.trade_b_amount_rank, b.trade_b_frequency_rank, b.last_b_trade_time_rank, b.fare0_b_tend_rank, " +
             " b.open_date_b_rank, b.trade_all_amount_rank, b.trade_all_frequency_rank, b.last_all_trade_time_rank, " +
@@ -61,19 +61,21 @@ class CalculateResultData {
       " left join "+custAvgMedTb + " d on c_branch_no = d.branch_no ")
     custResultInfoDF.createOrReplaceTempView("custResultInfoTmp")
 
-    spark.sql("insert overwrite table cust_result_info_tb select * from custResultInfoTmp where peak_vasset " +
-      "<= "+lowasset +" or peak_vasset >= " +highasset+" or ( peak_vasset > "+lowasset+" and peak_vasset < "+highasset+" " +
+    spark.sql("insert overwrite table bigdata.cust_result_info_tb " +
+      " select * from custResultInfoTmp " +
+      " where peak_vasset  <= "+lowasset +" or peak_vasset >= " + highasset+
+      " or ( peak_vasset > "+lowasset+" and peak_vasset < "+highasset+
       " and f_fare0_approch = 0 ) ")
 
-    spark.sql("create  table  IF NOT EXISTS  k_means_source_tb  " +
+    spark.sql("create  table  IF NOT EXISTS  bigdata.k_means_source_tb  " +
       "( c_custno string, branch_no string, amount_tendency double, frequency_tendency double, " +
       "  lastdate_dvalue int, f_fare0_tendency double, open_date_dvalue int, peak_vasset double, f_fare0_approch double )" +
-      " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' " +
-      " LINES TERMINATED BY ‘\n’ collection items terminated by '-' " +
-      " map keys terminated by ':' " +
+      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+
+      s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile " )
 
-    spark.sql("insert overwrite table k_means_source_tb " +
+    spark.sql("insert overwrite table bigdata.k_means_source_tb " +
       " select c_custno, branch_no, amount_tendency, frequency_tendency, lastdate_dvalue, f_fare0_tendency, open_date_dvalue," +
       " peak_vasset, f_fare0_approch " +
       " from  custResultInfoTmp where peak_vasset > "+lowasset+" and peak_vasset < "+highasset+" and f_fare0_approch != 0 ")

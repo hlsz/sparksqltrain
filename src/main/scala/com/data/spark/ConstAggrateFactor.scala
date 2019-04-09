@@ -22,10 +22,11 @@ class ConstAggrateFactor {
 
   def constAggrateFactor(inputDate:Int): Unit =
   {
+    spark.sql("use bigdata")
     spark.sql(
       s"""
          | create  table  IF NOT EXISTS  bigdata.const_aggratefacort
-         |   (client_id string,
+         |   (client_id int,
          |	tg_tag string,
          |	stock_num double,
          |	avg_businessprice double,
@@ -77,9 +78,9 @@ class ConstAggrateFactor {
          |	open_date_dvalue double,
          |	peak_vasset double
          |   )
-         | ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-         | LINES TERMINATED BY ‘\n’ collection items terminated by '-'
-         | map keys terminated by ':'
+         | ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"}
+         | LINES TERMINATED BY ${raw"'\n’"}
+         |
          | stored as textfile
        """.stripMargin)
 
@@ -127,7 +128,7 @@ class ConstAggrateFactor {
          |	,o.L_DATE
          |	,o.LASTDATE_DVALUE
          |	,o.C_BUSINESSFLAG
-         |	,${inputDate}
+         |	,${inputDate} input_date
          |	,o.APPRO_MONTHS_AMOUNT
          |	,o.REMO_MONTHS_AMOUNT
          |	,o.AMOUNT_TENDENCY
@@ -139,7 +140,7 @@ class ConstAggrateFactor {
          |	,o.F_FARE0_TENDENCY
          |	,o.OPEN_DATE_DVALUE
          |	,nvl(o.PEAK_VASSET,-1) PEAK_VASSET
-         |   from global_temp.c_cust_branch_tb a
+         |   from c_cust_branch_tb a
          |      left join result_clientstocknum  b on a.client_id = b.client_id
          |     left join result_bondavgprice  c on a.client_id = c.client_id
          |     left join result_constassetdivide  d on concat('c',a.client_id) = d.cust_no
@@ -167,4 +168,11 @@ class ConstAggrateFactor {
 
   }
 
+}
+
+object ConstAggrateFactor
+{
+  def main(args: Array[String]): Unit = {
+    new ConstAggrateFactor().constAggrateFactor((20190410))
+  }
 }
