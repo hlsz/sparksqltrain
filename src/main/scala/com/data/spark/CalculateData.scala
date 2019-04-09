@@ -68,9 +68,11 @@ class CalculateData {
     val custnoCountRDD = spark.sql("select c_custno from calDataTmp where input_date = " + inputDate)
     val custnoCount = custnoCountRDD.count().toInt
 
-    spark.sql("delete from bigdata.cal_date_tb  where input_date = "+ inputDate )
-    spark.sql("insert into bigdata.cal_date_tb select * from calDataTmp ")
+    spark.sql("delete from bigdata.cal_data_tb  where input_date = "+ inputDate )
+    spark.sql("insert into bigdata.cal_data_tb select * from calDataTmp ")
 
+    //--计算各指标
+    //--计算各营业部各指标的均值、中值(营业部所有客户的均值/中值)
     val branchAvgMedDF = spark.sql(" select a.branch_no, " +
       "  appro_amount_avg, remo_amount_avg, amount_tend_avg, appro_count_avg, remo_count_avg, " +
       " frequency_tend_avg, last_dv_avg,appro_fare0_avg, remo_fare0_avg, fare0_tend_avg,open_d_dvalue_avg, " +
@@ -100,9 +102,9 @@ class CalculateData {
       " median(open_date_dvalue) open_d_dvalue_med ," +
       " median(peak_vasset) peak_vasset_med " +
       "  from ( select c_custno, branch_no, " +
-      "        nvl(appro_months_amount, 0) appro_months_amount, " +
-      "         nvl(remo_months_amount,0) remo_months_amount , " +
-      "        nvl(amount_tendency,0)  amount_tendency," +
+              " nvl(appro_months_amount, 0) appro_months_amount, " +
+              " nvl(remo_months_amount,0) remo_months_amount , " +
+              " nvl(amount_tendency,0)  amount_tendency," +
               " nvl(appro_months_count,0)  appro_months_count , " +
               " nvl(remo_months_count, 0) remo_months_count, " +
               " nvl(frequency_tendency,0) frequency_tendency," +
@@ -159,11 +161,13 @@ class CalculateData {
                     " nvl(f_fare0_tendency,0) f_fare0_tendency, " +
                     " nvl(open_date_dvalue,0) open_date_dvalue, " +
                     " nvl(peak_vasset,0) peak_vasset " +
-                    " from cal_data_tb t  where input_date = "+inputDate+") " +
-      " group by branch_no ) a " +
-      " left outer join (select 'ALL' branch_no, avg(lastdate_dvalue) last_dv_al_avg, median(lastdate_dvalue) last_dv_al_med " +
-      "  from cal_data_tb where lastdate_dvalue != -1 and input_date = "+inputDate+
-      "  ) b  on a.branch_no = b.branch_no ")
+                    " from cal_data_tb t  where input_date = "+inputDate+")) a " +
+      " left outer join (select 'ALL' branch_no, " +
+      " avg(lastdate_dvalue) last_dv_al_avg, " +
+      " median(lastdate_dvalue) last_dv_al_med " +
+      "  from cal_data_tb where lastdate_dvalue != -1 and input_date = "+inputDate+ " ) b " +
+      " on a.branch_no = b.branch_no ")
+
     allAvgMedDF.createOrReplaceGlobalTempView("allAvgMedTmp")
     //计算客户交易金额在营业部的排名
     val bTradeAmRankDF = spark.sql("select t.branch_no, c_custno, " +
@@ -295,7 +299,7 @@ class CalculateData {
       s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile " )
 
-    spark.sql("insert overwrite table  bigdata.b_all_avg_med_tb ( branch_no, appro_amount_avg, remo_amount_avg," +
+    spark.sql("insert overwrite table  bigdata.b_all_avg_med_tb ( ,branch_no appro_amount_avg, remo_amount_avg," +
       "     amount_tend_avg, appro_count_avg, remo_count_avg, frequency_tend_avg, last_dv_avg, appro_fare0_avg, remo_fare0_avg, " +
       "     fare0_tend_avg, open_d_dvalue_avg, peak_vasset_avg, appro_amount_med, remo_amount_med,amount_tend_med, appro_count_med, remo_count_med, " +
       "     frequency_tend_med, last_dv_med, appro_fare0_med, remo_fare0_med, fare0_tend_med, open_d_dvalue_med, peak_vasset_med, insert_date)" +

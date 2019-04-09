@@ -115,9 +115,8 @@ class CapitaIdleRate {
     spark.sql("insert into capital_idal_rate_tb select * from capitalIdalRateTmp")
 
 
-    val countAllClientDF = spark.sql("select count(1) cnt from c_cust_branch_tb ").collect()
-    val countAllClient = countAllClientDF.map(x => x(0))
-
+    val countAllClientDF = spark.sql("select client_id from c_cust_branch_tb ")
+    val countAllClient = countAllClientDF.count().toInt
 
     spark.sql("create table if not exists result_idle_rate " +
       "( client_id int, branch_no string, c_custno string, approch_idle_rate double, remote_idle_rate double, " +
