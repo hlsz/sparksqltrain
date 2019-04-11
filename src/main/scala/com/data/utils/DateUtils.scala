@@ -1,18 +1,35 @@
 package com.data.utils
 
-import java.text.DecimalFormat
-import java.util.{Date, Locale}
+import java.text.{DecimalFormat, SimpleDateFormat}
+import java.time.LocalDate
+import java.util.{Calendar, Date, Locale}
 
 import org.apache.commons.lang3.time.FastDateFormat
+import org.joda.time.DateTime
+
+import scala.collection.mutable.ListBuffer
+
+
+object Test_Time001 {
+  def main(args: Array[String]): Unit = {
+    val nowdate = LocalDate.now()
+    println("LocalDate.now()-->现在的时间是" + LocalDate.now())
+    println("nowdate.plusDays-->明天是-->" + nowdate.plusDays(1))
+    println("nowdate.minusDays-->昨天是-->" + nowdate.minusDays(1))
+    println("nowdate.plusMonths-->今天加一个月-->" + nowdate.plusMonths(1))
+    println("nowdate.minusMonths-->今天减一个月-->" + nowdate.minusMonths(1))
+    println("nowdate.getDayOfYear-->今天是今年的第" + nowdate.getDayOfYear + "天")
+    println("nowdate.getDayOfMonth->这个月有" + nowdate.getDayOfMonth + "天")
+    println("nowdate.getDayOfWeek-->今天星期" + nowdate.getDayOfWeek)
+    println("nowdate.getMonth-->这个月是" + nowdate.getMonth)
+  }
+}
 
 object DateUtils {
   //FastDateFormat
-  val YYYYMMDDHHMM_TIME_FORMAT = FastDateFormat.getInstance("dd/MM/yyyy:HH:mm:ss Z",Locale.ENGLISH)
+  val YYYYMMDDHHMM_TIME_FORMAT = FastDateFormat.getInstance("dd/MM/yyyy:HH:mm:ss Z", Locale.ENGLISH)
 
   val TARGET_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
-
-  import java.text.SimpleDateFormat
-  import java.util.Calendar
 
   val DATE_FORMAT = "yyyy-MM-dd"
 
@@ -22,6 +39,306 @@ object DateUtils {
 
   val DATE_FORMAT_CHINESE = "yyyy年M月d日"
 
+  def intervalMonths(fromDate:String, toDate:String): Int ={
+    val sdf = new SimpleDateFormat(DATE_FORMAT)
+    val str1 = fromDate
+    val str2 = toDate
+    val bef = Calendar.getInstance()
+    val aft = Calendar.getInstance()
+    bef.setTime(sdf.parse(str1))
+    aft.setTime(sdf.parse(str2))
+    var surplus = aft.get(Calendar.DATE) - bef.get(Calendar.DATE)
+    val result = aft.get(Calendar.MONTH) - bef.get(Calendar.MONTH)
+    val month = (aft.get(Calendar.YEAR) - bef.get(Calendar.YEAR)) * 12
+//    println(surplus)
+    surplus = if (surplus < 0) {1} else {0}
+//    println(surplus)
+//    println("相差月份：" + (Math.abs(month + result) + surplus))
+    Math.abs(month + result) + surplus
+  }
+
+  def getDaysOfMonth( year:Int,  month:Int) :Int = {
+    val calendar = Calendar.getInstance()
+    calendar.set(year, month - 1, 1)
+    calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+  }
+
+  def getYear( date:Date):Int = {
+    val calendar = Calendar.getInstance()
+    calendar.setTime(date)
+    calendar.get(Calendar.YEAR)
+  }
+
+  def getMonth( date:Date) :Int = {
+    val calendar = Calendar.getInstance()
+    calendar.setTime(date)
+    calendar.get(Calendar.MONTH) + 1
+  }
+  def  getDay( date:Date):Int = {
+    val calendar = Calendar.getInstance()
+    calendar.setTime(date)
+    calendar.get(Calendar.DATE)
+  }
+
+
+  def calDiffMonth(startDate:String, endDate:String) :Int ={
+    var result=0
+    try {
+      val sfd=new SimpleDateFormat("yyyy-MM-dd")
+      val start = sfd.parse(startDate)
+      val end = sfd.parse(endDate)
+      val startYear=getYear(start)
+      val startMonth=getMonth(start)
+      val startDay=getDay(start)
+      val endYear=getYear(end)
+      val endMonth=getMonth(end)
+      var endDay=getDay(end)
+      if (startDay > endDay){ //1月17  大于 2月28
+        if (endDay==getDaysOfMonth(getYear(new Date()),2)){   //也满足一月
+          result=(endYear-startYear)*12+endMonth-startMonth
+        }else{
+          result=(endYear-startYear)*12+endMonth-startMonth-1
+        }
+      }else{
+        result=(endYear-startYear)*12+endMonth-startMonth
+      }
+    } catch  {
+      case e:Exception => -1
+    }
+    result
+  }
+
+  def getMonthDiff(d1:Date, d2:Date) {
+        val c1 = Calendar.getInstance()
+        val c2 = Calendar.getInstance()
+        c1.setTime(d1)
+        c2.setTime(d2)
+        val year1 = c1.get(Calendar.YEAR)
+        val year2 = c2.get(Calendar.YEAR)
+        val month1 = c1.get(Calendar.MONTH)
+        val month2 = c2.get(Calendar.MONTH)
+        val day1 = c1.get(Calendar.DAY_OF_MONTH)
+        val day2 = c2.get(Calendar.DAY_OF_MONTH)
+        // 获取年的差值
+        var yearInterval = year1 - year2
+        // 如果 d1的 月-日 小于 d2的 月-日 那么 yearInterval-- 这样就得到了相差的年数
+        if (month1 < month2 || month1 == month2 && day1 < day2)
+        {
+          yearInterval = yearInterval-1
+        }
+        // 获取月数差值
+        var monthInterval = (month1 + 12) - month2
+        if (day1 < day2){
+          monthInterval = monthInterval - 1
+        }
+        monthInterval %= 12
+        val monthsDiff = Math.abs(yearInterval * 12 + monthInterval);
+//        return monthsDiff
+  }
+
+
+  def intevalSeconds(fromDate:String, toDate:String): Long = {
+    val df = new SimpleDateFormat(DateUtils.DATE_TIME_FORMAT)
+    try {
+      //前的时间
+      val fd = df.parse(fromDate)
+      //后的时间
+      val td: Date = df.parse(toDate)
+      //两时间差,精确到毫秒
+      val diff: Long = td.getTime() - fd.getTime()
+      val seconds: Long = diff % 86400000 % 3600000 % 60000 / 1000
+      seconds
+    } catch {
+      case e:Exception => 0L
+    }
+  }
+
+  def intervalDays(fromDate:String, toDate:String): Long = {
+    val df = new SimpleDateFormat(DateUtils.DATE_FORMAT)
+    try {
+      //前的时间
+      val fd = df.parse(fromDate)
+      //后的时间
+      val td: Date = df.parse(toDate)
+      //两时间差,精确到毫秒
+      val diff: Long = td.getTime() - fd.getTime()
+      val day:Long  = Math.abs(diff / 86400000)
+      day
+    } catch {
+      case e:Exception => 0L
+    }
+  }
+
+  def interDays(fromDate:String,toDate:String): Long ={
+
+    val sdf = new SimpleDateFormat(DateUtils.DATE_FORMAT )
+    //跨年的情况会出现问题哦
+    //如果时间为：2016-03-18 11:59:59 和 2016-03-19 00:00:01的话差值为 1
+    val fDate = sdf.parse(fromDate)
+    val oDate = sdf.parse(toDate)
+    val aCalendar: Calendar = Calendar.getInstance
+    aCalendar.setTime(fDate)
+    val day1: Int = aCalendar.get(Calendar.DAY_OF_YEAR)
+    aCalendar.setTime(oDate)
+    val day2: Int = aCalendar.get(Calendar.DAY_OF_YEAR)
+    val days = Math.abs(day2 - day1)
+    days.toLong
+  }
+
+  def diffDateInterval(fromDate:String, toDate:String): Unit =
+  {
+//    String fromDate = "2013-04-16 08:29:12";
+//    String toDate = "2013-04-20 09:44:29";
+    val df = new SimpleDateFormat(DateUtils.DATE_TIME_FORMAT)
+    try {
+      //前的时间
+      val fd = df.parse(fromDate)
+      //后的时间
+      val td:Date = df.parse(toDate)
+      //两时间差,精确到毫秒
+      val diff:Long = td.getTime() - fd.getTime()
+      val day:Long  = diff / 86400000                        //以天数为单位取整
+      val hour:Long = diff % 86400000 / 3600000               //以小时为单位取整
+      val min:Long  = diff % 86400000 % 3600000 / 60000       //以分钟为单位取整
+      val seconds:Long = diff % 86400000 % 3600000 % 60000 / 1000   //以秒为单位取整
+      //天时分秒
+//      println("两时间差---> " +day+"天"+hour+"小时"+min+"分"+seconds+"秒");
+    } catch {
+      case e:Exception => e.printStackTrace()
+    }
+
+  }
+
+
+  def isValidDate(str:String) : Boolean  = {
+    val  strrepl = str
+    if (str.indexOf("/") > 0) {
+     val  strrepl = str.replaceAll("""/""", """-""")
+    }
+    var convertSuccess = true
+    val format = new SimpleDateFormat("yyyy-MM-dd")
+    try {
+      format.setLenient(false)
+      format.parse(strrepl)
+    } catch  {
+      case e:Exception  => false
+    }
+    return convertSuccess
+  }
+
+
+  /**
+    * 获取两个日期之间的日期
+    * @param start 开始日期
+    * @param end 结束日期
+    * @return 日期集合
+    */
+  def getBetweenDates(start: String, end: String) = {
+    val startData = new SimpleDateFormat("yyyyMMdd").parse(start); //定义起始日期
+    val endData = new SimpleDateFormat("yyyyMMdd").parse(end); //定义结束日期
+
+    val dateFormat: SimpleDateFormat = new SimpleDateFormat("yyyyMMdd")
+    var buffer = new ListBuffer[String]
+    buffer += dateFormat.format(startData.getTime())
+    val tempStart = Calendar.getInstance()
+
+    tempStart.setTime(startData)
+    tempStart.add(Calendar.DAY_OF_YEAR, 1)
+
+    val tempEnd = Calendar.getInstance()
+    tempEnd.setTime(endData)
+    while (tempStart.before(tempEnd)) {
+      // result.add(dateFormat.format(tempStart.getTime()))
+      buffer += dateFormat.format(tempStart.getTime())
+      tempStart.add(Calendar.DAY_OF_YEAR, 1)
+    }
+    buffer += dateFormat.format(endData.getTime())
+
+    buffer.toList
+  }
+
+  //时间字符串=>时间戳
+  def convertDateStr2TimeStamp(dateStr: String, pattern: String): Long = {
+    new SimpleDateFormat(pattern).parse(dateStr).getTime
+  }
+
+  //时间字符串+天数=>时间戳
+  def dateStrAddDays2TimeStamp(dateStr: String, pattern: String, days: Int): Long = {
+    convertDateStr2Date(dateStr, pattern).plusDays(days).toDate().getTime
+  }
+
+  //时间字符串=>日期
+  def convertDateStr2Date(dateStr: String, pattern: String): DateTime = {
+    new DateTime(new SimpleDateFormat(pattern).parse(dateStr))
+  }
+
+  //时间戳=>日期
+  def convertTimeStamp2Date(timestamp: Long): DateTime = {
+    new DateTime(timestamp)
+  }
+
+  //时间戳=>字符串
+  def convertTimeStamp2DateStr(timestamp: Long, pattern: String): String = {
+    new DateTime(timestamp).toString(pattern)
+  }
+
+  //时间戳=>小时数
+  def convertTimeStamp2Hour(timestamp: Long): Long = {
+    new DateTime(timestamp).hourOfDay().getAsString().toLong
+  }
+
+  //时间戳=>分钟数
+  def convertTimeStamp2Minute(timestamp: Long): Long = {
+    new DateTime(timestamp).minuteOfHour().getAsString().toLong
+  }
+
+  //时间戳=>秒数
+  def convertTimeStamp2Sec(timestamp: Long): Long = {
+    new DateTime(timestamp).secondOfMinute().getAsString.toLong
+  }
+
+
+
+  def addZero(hourOrMin: String): String = {
+    if (hourOrMin.toInt <= 9)
+      "0" + hourOrMin
+    else
+      hourOrMin
+
+  }
+
+  def delZero(hourOrMin: String): String = {
+    var res = hourOrMin
+    if (!hourOrMin.equals("0") && hourOrMin.startsWith("0"))
+      res = res.replaceAll("^0","")
+    res
+  }
+
+  def dateStrPatternOne2Two(time: String): String = {
+   convertTimeStamp2DateStr(convertDateStr2TimeStamp(time, DATE_FORMAT), DATE_INT_FORMAT)
+  }
+
+  //获取星期几
+  def dayOfWeek(dateStr: String): Int = {
+    val sdf = new SimpleDateFormat("yyyy-MM-dd")
+    val date = sdf.parse(dateStr)
+    //    val sdf2 = new SimpleDateFormat("EEEE")
+    //    sdf2.format(date)
+    val cal = Calendar.getInstance();
+    cal.setTime(date);
+    var w = cal.get(Calendar.DAY_OF_WEEK) - 1;
+
+    //星期天 默认为0
+    if (w <= 0)
+      w = 7
+    w
+  }
+
+  //判断是否是周末
+  def isRestday(date: String): Boolean = {
+    val dayNumOfWeek = dayOfWeek(date)
+    dayNumOfWeek == 6 || dayNumOfWeek == 7
+  }
 
 
   //    获取今天日期
@@ -101,13 +418,6 @@ object DateUtils {
     val hour = between % (60*60) //转化为小时
   }
 
-
-  def dateToLong(date: String): Long ={
-    val timeDate: Date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(date)
-    val timeLong: Long = timeDate.getTime
-    timeLong
-  }
-
   def dateToInt(date: Date): Int ={
     val sdf = new SimpleDateFormat(DateUtils.DATE_INT_FORMAT)
     val dateStr = sdf.format(date)
@@ -115,21 +425,30 @@ object DateUtils {
   }
 
   def intToDate(date: Int): Date ={
-    val dateFormat = new SimpleDateFormat(DateUtils.DATE_FORMAT)
+    val dateFormat = new SimpleDateFormat(DateUtils.DATE_INT_FORMAT)
     val str = String.valueOf(date)
-    dateFormat.parse(str.substring(0,4)+"-"+str.substring(4,6)+"-"+str.substring(6,8))
+    dateFormat.parse(str)
   }
   def intToDateStr(date: Int): String ={
-    val sdf = new SimpleDateFormat(DateUtils.DATE_FORMAT)
-    val dateStr = String.valueOf(date)
-    val datetime = sdf.parse(dateStr.substring(0,4)+"-"+dateStr.substring(4,6)+"-"+dateStr.substring(6,8))
-    sdf.format(datetime.getTime)
+    val value = intToDate(date)
+    val sdf =  new SimpleDateFormat(DateUtils.DATE_FORMAT)
+    sdf.format(value.getTime)
+  }
+  def intToDateStr(date: Int, format:String): String ={
+    val value = intToDate(date)
+    val sdf =  new SimpleDateFormat(format)
+    sdf.format(value.getTime)
   }
 
   def longToDate(dateLong : Long): Date ={
     val timeDate: String = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(dateLong * 1000L)
     val df = new SimpleDateFormat(DateUtils.DATE_TIME_FORMAT)
     df.parse(timeDate)
+  }
+  def dateToLong(date: String): Long ={
+    val timeDate: Date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(date)
+    val timeLong: Long = timeDate.getTime
+    timeLong
   }
 
   def dateFormat(date : Date, format : String): String = {
@@ -245,7 +564,6 @@ object DateUtils {
     date
   }
 
-
   /**
     * 将日期格式日期转换为字符串格式
     *
@@ -273,7 +591,7 @@ object DateUtils {
       datestr = df.format(date)
       datestr
     }catch{
-      case e:Exception =>{
+      case e:Exception => {
           e.printStackTrace()
       }
     }
@@ -531,7 +849,7 @@ object DateUtils {
     *
     * @param date
     * 输入日期
-    * @param imonth
+    * @param
     * 要增加或减少的天数
     */
   def addDay(date: Date, iday: Int): Date = {
@@ -560,7 +878,7 @@ object DateUtils {
     *
     * @param date
     * 输入日期
-    * @param imonth
+    * @param iyear
     * 要增加或减少的年数
     */
   def addYear(date: Date, iyear: Int): Date = {
@@ -685,7 +1003,23 @@ object DateUtils {
   }
 
   def main(args:Array[String]): Unit ={
-    print(parse("[10/Nov/2016:00:01:02 +0800]"))
+//    print(parse("[10/Nov/2016:00:01:02 +0800]"))
+
+    val rs = intervalMonths("2017-01-01","2017-09-01")
+    println(rs)
+//    val months = getMonthDiff(new Date("2018-01-01"), new Date("2017-01-01"))
+//    println(months)
+    val month2 = calDiffMonth("2017-01-01","2017-09-01")
+    println(month2)
+
+    val str =intToDate(20180101)
+    println("str:"+str)
+
+    val day =intervalDays("2018-01-01","2018-03-01")
+    println(day)
+
+    val days = interDays("2018-03-01","2018-01-01")
+    println(days)
   }
 
 }

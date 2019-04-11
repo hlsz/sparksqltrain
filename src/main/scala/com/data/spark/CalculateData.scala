@@ -179,7 +179,7 @@ class CalculateData {
     bTradeAmRankDF.createOrReplaceTempView("bTradeAmRankTmp")
     //计算客户交易频率在营业部的排名
     val bTradeFrRankDF = spark.sql("select t.branch_no, c_custno, " +
-      " (case when amount_tendency = 0 " +
+      " (case when frequency_tendency = 0 " +
       " then -1 else round((c_cust_count - rk ) * 100 / c_cust_count, 4) end ) rak " +
       " from (select c_custno, branch_no, frequency_tendency, dense_rank() over(partition by branch_no order by frequency_tendency desc ) rk " +
       "        from (select c_custno, branch_no, appro_months_count frequency_tendency from cal_data_tb where input_date = "+inputDate+")) a" +
@@ -203,9 +203,9 @@ class CalculateData {
       " lastdate_dvalue, (case when l_date = 0 and lastdate_dvalue = 100 the  -1 " +
       " when l_date = 0 and lastdate_dvalue  = 200 the  -1   " +
       " when l_date = 0 and lastdate_dvalue  = 400 the  -1" +
-      " else round((c_custno_count - rk)  * 100 / c_cust_count ,4) end rak " +
+      " else round((c_cust_count - rk)  * 100 / c_cust_count ,4) end ) rak " +
       " from (select c_custno, branch_no, l_date, c_businessflag,   lastdate_dvalue, " +
-      "     dense_rank() over (partition by branch_no order by lastdate_davalue asc ) rk " +
+      "     dense_rank() over (partition by branch_no order by lastdate_dvalue asc ) rk " +
       "   from cal_data_tb " +
       "   where input_date = "+inputDate+") a " +
       " left join branchCustCountTmp t on a.branch_no = t.branch_no ")
@@ -250,7 +250,7 @@ class CalculateData {
       " lastdate_dvalue, (case when l_date = 0 and lastdate_dvalue = 100 the  -1 " +
       " when l_date = 0 and lastdate_dvalue  = 200 the  -1   " +
       " when l_date = 0 and lastdate_dvalue  = 400 the  -1" +
-      " else round((c_custno_count - rk)  * 100 / c_cust_count ,4) end rak " +
+      " else round((c_cust_count - rk)  * 100 / c_cust_count ,4) end rak " +
       " from (select c_custno, branch_no, l_date, c_businessflag,  lastdate_dvalue, " +
       "     dense_rank() over (order by lastdate_davalue asc ) rk " +
       "   from cal_data_tb where input_date = "+inputDate+") a " +
@@ -333,7 +333,7 @@ class CalculateData {
       " stored as textfile ")
 
     spark.sql("insert into  bigdata.client_rank_tb ( " +
-      " c_custno, branch_no, trade_b_amount_rank, trade_b_frequency_rank, last_b_trade_time_rank, fare0_b_tend," +
+      " c_custno, branch_no, trade_b_amount_rank, trade_b_frequency_rank, last_b_trade_time_rank, fare0_b_tend_rank," +
       " open_data_b_rank, trade_all_amount_rank, trade_all_frequency_rank, last_all_trade_time_rank, fare0_all_tend_rank," +
       " open_date_all_rank, fare0_b_rank, fare0_all_rank, peakasset_b_rank, peakasset_all_rank, " +
       " insert_date , input_date ) " +

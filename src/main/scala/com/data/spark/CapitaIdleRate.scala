@@ -202,7 +202,7 @@ class CapitaIdleRate {
          | ,input_date
          | )
          | select   round(avg(approch_idle_rate),4)  approavg_idlerate , round(median(approch_idle_rate),4) appromed_idlerate,
-         |         -1 branch_no , round(avg(remote_idle_rate),4)  remoteavg_idlerate,
+         |         |         -1 branch_no , round(avg(remote_idle_rate),4)  remoteavg_idlerate,
          |      round(median(remote_idle_rate),4) remotemed_idlerate, ${calcuDate} input_date
          |  from  capitalIdalRateTmp
          |  where input_date = ${calcuDate}

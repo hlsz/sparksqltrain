@@ -415,7 +415,7 @@ class BankBondCalculte {
          | ,round((b.branchallcount -nvl(a.superbra_apprsumdva,b.branchallcount) ) * 100 /b.branchallcount ,4)
          | ,case when appro_frequency_dvalue<=0 then 0 else
          | round((b.branchallcount -nvl(a.superbra_apprfredva,b.branchallcount) ) * 100 /b.branchallcount ,4) end
-         | ,round((b.branchallcount -nvl(a.superbra_insumten,b.branchallcount) ) * 100 /b.branchallcount ,4)
+         | ,round((b.branchallcount -nvl(a.superbra_insumte·n,b.branchallcount) ) * 100 /b.branchallcount ,4)
          | ,round((b.branchallcount -nvl(a.superbra_outsumten,b.branchallcount) ) * 100 /b.branchallcount ,4)
          | ,round((b.branchallcount -nvl(a.supercbra_infreten,b.branchallcount) ) * 100 /b.branchallcount ,4)
          | ,round((b.branchallcount -nvl(a.superbra_outfreten,b.branchallcount) ) * 100 /b.branchallcount ,4)
@@ -456,7 +456,7 @@ class BankBondCalculte {
          | ,dense_rank() over(partition by branch_no  order by out_frequency_tendency  desc)    superbra_outfreten
          | ,dense_rank() over(partition by branch_no  order by sum_dvalue_tendency  desc)       superbra_sumdvaten
          | ,dense_rank() over(partition by branch_no  order by frequency_dvalue_tendency  desc) superbra_fredvaten
-         | from bigdata.banktransfer_result_tb where input_date= ${calcuDate} )a
+         | from bigdata.banktransfer_result_tb where input_date= ${calcuDate} ) a
          | left join (select   count(*) branchallcount ,branch_no from bigdata.c_cust_branch_tb
          | group by branch_no  ) b on a.branch_no = b.branch_no
        """.stripMargin)

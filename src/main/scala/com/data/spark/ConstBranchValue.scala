@@ -323,7 +323,8 @@ class ConstBranchValue {
          |		,l.medappro_assetrate
          |		,h.INSERT_DATE
          |		,${inputDate}
-         |			 from result_branchstock a  left join result_branchdoprice b   on a.branch_no = b.branch_no
+         |			 from result_branchstock a
+         |        left join result_branchdoprice b   on a.branch_no = b.branch_no
          |			  left  join branchappro_traderate c  on c.branch_no = a.branch_no
          |			  left  join resultappro_branchdeciaml d  on d.branch_no = a.branch_no
          |			  left  join branch_traderate e  on e.branch_no = a.branch_no

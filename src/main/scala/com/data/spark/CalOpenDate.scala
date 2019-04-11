@@ -39,7 +39,7 @@ class CalOpenDate {
 
     val resultDataOpenDF = spark.sql("select branch_no, c_custno, open_date, " +
       " datediff( '" +DateUtils.intToDateStr(calDate)+ "' " +
-      " , concat(substr(cast(open_date as string),0,4),'-',substr(cast(open_date as string),5,2),'-',substr(cast(open_date as string),7,2) ) ) " +
+      " , concat(substr( open_date  ,0,4),'-',substr( open_date ,5,2),'-',substr( open_date ,7,2) ) ) " +
       " as open_date_dvalue " +
       " from c_cust_branch_tb ")
     resultDataOpenDF.createOrReplaceTempView("resultDataOpenTmp")

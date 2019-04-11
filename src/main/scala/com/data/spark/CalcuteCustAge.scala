@@ -88,7 +88,7 @@ class CalcuteCustAge {
 
     spark.sql("create table if not exists bigdata.result_branchage " +
       " (  branch_no string, avg_age int, med_age double,  input_date int) " +
-      s" ROW FORMAT DELIMITED FIELDS TERMINATED BY ${raw"'\t'"} " +
+      s" ROW FORMAT DELIMITED FIELDS avg_ageTERMINATED BY ${raw"'\t'"} " +
 
       s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")

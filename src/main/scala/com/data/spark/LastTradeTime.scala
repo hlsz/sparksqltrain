@@ -44,8 +44,8 @@ class LastTradeTime
       "       when l_date = 0 and "+dateContains+" =9 then 400 " +
       "  else datediff ('"+DateUtils.intToDateStr(calcuDate)+"' "+
       // hivesql => sparksql    concat('\'','a' ,'b','\'') => 'concat('\\'','a' ,'b','\\'')
-      s" , concat(substr(cast(l_date as string),0,4),'-'," +  //此处concat中无需添加单引号，${raw"'\''"},
-      s"          substr(cast(l_date as string),5,2),'-',substr(cast(l_date as string),7,2) ))" + // 此处concat中无需添加单引号 ${raw"'\''"}
+      s" , concat(substr(l_date ,0,4),'-'," +  //此处concat中无需添加单引号，${raw"'\''"},
+      s"          substr(l_date ,5,2),'-',substr(l_date,7,2) ))" + // 此处concat中无需添加单引号 ${raw"'\''"}
       s" end ) as lastdate_dvalue " +
       " from (select a.c_custno, a.branch_no, nvl(l_date,0) as l_date, nvl(c_businessflag, '0') as c_businessflag  " +
       "        from (select c_custno, branch_no from "+targetCustTab+")  a " +
