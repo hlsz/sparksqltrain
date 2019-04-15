@@ -4,11 +4,20 @@ import com.data.utils.DateUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
+
+object DmDeliverProc {
+  def main(args: Array[String]): Unit = {
+    new DmDeliverProc().deliverProc(20190401,3)
+
+  }
+
+}
+
 class DmDeliverProc {
 
   val conf = new SparkConf()
     .setAppName("DmDeliverProc")
-    .setMaster("yarn-client")
+//    .setMaster("yarn-client")
 
   val spark = SparkSession
     .builder()
@@ -17,9 +26,16 @@ class DmDeliverProc {
     .config("spark.sql.parquet.writeLegacyFormat", true)
     .config("spark.sql.warehouse.dir", "/user/hive/warehouse/bigdata.db")
     //数据倾斜
-    .config("spark.sql.shuffle.partitions", 200)
+//    .config("spark.sql.shuffle.partitions", 30)
     .enableHiveSupport()
     .getOrCreate()
+
+
+  // 设置参数
+  // hive > set  hive.exec.dynamic.partition.mode = nonstrict;
+  // hive > set  hive.exec.dynamic.partition = true;
+  spark.sql("set  hive.exec.dynamic.partition.mode = nonstrict")
+  spark.sql("set  hive.exec.dynamic.partition = true")
 
   /**
     *
@@ -53,6 +69,10 @@ class DmDeliverProc {
 
     val intervalMonths =  Math.abs(maxIntervalVal / minIntervalValResult)
 
+    val hcfa = "hs08_client_for_ai"
+    val dds = "dm_deliver_stat"
+
+
 
     spark.sql("use bigdata")
 
@@ -68,7 +88,7 @@ class DmDeliverProc {
          |			   c.open_date,
          |			   c.organ_flag,
          |			   c.birthday,
-         |			   he.l_date ,
+         |			   he.oc_date l_date ,
          |			   he.business_amount f_businessamount,
          |			   he.business_price f_businessprice,
          |			   he.business_balance f_businessbalance,
@@ -80,15 +100,39 @@ class DmDeliverProc {
          |					 when he.money_type = '2' then fare0 * 0.8858 end ) f_fare0
          |		from hs08_client_for_ai c
          |		left join hs08_his_deliver  he on c.c_custno = he.c_custno
-         |		where he.l_date >= ${startDate} and   he.l_date < ${endDate}
+         |		where he.oc_date >= ${startDate} and   he.oc_date < ${endDate}
          | ) t
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     DmDeliverDF.createOrReplaceTempView("DmDeliverTmp")
 
     val  clientCountDF = spark.sql("select c_custno from hs08_client_for_ai")
     val clientCount = clientCountDF.count().toInt
 
+    spark.sql(
+      s"""
+         | create table if not exists dm_deliver_stat
+         | (
+         | c_custno string
+         | ,branch_no string
+         | ,open_date_dvalue double
+         | ,age int
+         | ,appro_months_amount double
+         | ,remo_months_amount double
+         | ,amount_tendency double
+         | ,appro_months_count double
+         | ,remo_months_count double
+         | ,frequency_tendency double
+         | ,f_fare0_approch double
+         | ,f_fare0_remote double
+         | ,f_fare0_tendency double
+         | ,lastdate_dvalue double
+         | ,input_date int
+         | )  PARTITIONED BY (input_date int)
+         | ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
+         | LINES TERMINATED BY ${raw"'\n'"}
+         | stored as textfile
+       """.stripMargin.replace("\r\n"," "))
 
 
     val dmDeliverStatDF = spark.sql(
@@ -110,36 +154,40 @@ class DmDeliverProc {
          |		,(case when he.l_date = 0 and ${maxIntervalVal} =3 then 100
          |			  when he.l_date = 0 and ${maxIntervalVal} =6 then 200
          |			  when he.l_date = 0 and ${maxIntervalVal} =9 then 400
-         |			  else datediff(${endDateFormatStr} , concat(substr(he.l_date,0,4),'-',substr(he.l_date,5,2),'-',substr(he.l_date,7,2))) end )   lastdate_dvalue
+         |			  else datediff('${endDateFormatStr}' , concat(substr(he.l_date,0,4),'-',substr(he.l_date,5,2),'-',substr(he.l_date,7,2))) end )   lastdate_dvalue
+         |    ,${endDate} input_date
          | from (
-         |		select c_custno,
-         |				branch_no,
-         |        open_date_dvalue,
-         |        age,
-         |				max(l_date) l_date ,
-         |				case when l_date_interval_months = ${minIntervalValResult} then sum(f_businessbalance) over (partition by c_custno) end appro_months_amount ,
-         |				case when l_date_interval_months = ${maxIntervalVal} then sum(f_businessbalance) over (partition by c_custno) end remo_months_amount ,
-         |				case when l_date_interval_months = ${minIntervalValResult} then count(c_custno) over (partition by c_custno) end appro_months_count,
-         |				case when l_date_interval_months = ${maxIntervalVal} then count(c_custno) over (partition by c_custno) end remo_months_count,
-         |				case when l_date_interval_months = ${minIntervalValResult} then sum(f_fare0) over (partition by c_custno ) end  f_fare0_approch,
-         |				case when l_date_interval_months = ${maxIntervalVal} then sum(f_fare0) over (partition by c_custno ) end  f_fare0_remote
+         |		select c_custno
+         |				,max(branch_no)  branch_no
+         |        ,max(open_date_dvalue) open_date_dvalue
+         |        ,max(age) age
+         |				,max(l_date) l_date
+         |				,sum(case when l_date_interval_months = ${minIntervalValResult} then f_businessbalance else 0  end ) appro_months_amount
+         |				,sum(case when l_date_interval_months = ${maxIntervalVal} then  f_businessbalance else 0 end ) remo_months_amount
+         |				,count(case when l_date_interval_months = ${minIntervalValResult} then c_custno else null end  ) appro_months_count
+         |				,count(case when l_date_interval_months = ${maxIntervalVal} then  c_custno else null  end ) remo_months_count
+         |				,sum(case when l_date_interval_months = ${minIntervalValResult} then f_fare0 else 0   end )  f_fare0_approch
+         |				,sum(case when l_date_interval_months = ${maxIntervalVal} then f_fare0 else 0  end ) f_fare0_remote
          |		from (
-         |				select  client_id,
-         |            c_custno,
-         |            branch_no,
-         |            organ_flag ,
-         |						l_date,
-         |						c_businessflag,
-         |						f_fare0,
-         |						ceil(months_between(${startDateFormatStr},${endDateFormatStr}))  l_date_interval_months,
-         |						datediff(${endDateFormatStr} , concat(substr(open_date,0,4),'-',substr(open_date,5,2),'-',substr(open_date,7,2)) )   as open_date_dvalue,
-         |						case when birthday = 0 then -1 else year(${endDateFormatStr}) - year(birthday)  end age
+         |				select  client_id
+         |            ,c_custno
+         |            ,branch_no
+         |            ,organ_flag
+         |						,l_date
+         |						,c_businessflag
+         |						,f_fare0
+         |            ,f_businessbalance
+         |						,ceil(months_between('${startDateFormatStr}','${endDateFormatStr}'))  l_date_interval_months
+         |						,datediff('${endDateFormatStr}' , concat(substr(open_date,0,4),'-',substr(open_date,5,2),'-',substr(open_date,7,2)) )
+         |            as open_date_dvalue
+         |						,case when birthday = 0 then -1 else year('${endDateFormatStr}') - year(birthday)  end age
          |				from DmDeliverTmp
          |			)
-         |	  )
-       """.stripMargin)
+         |  group by c_custno
+         |) he
+       """.stripMargin.replace("\r\n"," "))
     dmDeliverStatDF.createOrReplaceTempView("dmDeliverStatTmp")
-    spark.sql("insert into dm_deliver_stat select * from dmDeliverStatTmp")
+    spark.sql("insert overwrite table  dm_deliver_stat select * from dmDeliverStatTmp")
 
     spark.sql(
       s"""
@@ -161,66 +209,69 @@ class DmDeliverProc {
          |    avg_age double,med_age double,
          |	  last_dv_avg double,last_dv_med double
          |    ,input_date int
-         | ) ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
+         | )  PARTITIONED BY (input_date int)
+         | ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
          | LINES TERMINATED BY ${raw"'\n'"}
          | stored as textfile
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     val dmDeliverCaclDF = spark.sql(
       s"""
-         | select case when branch_no is null then  -1 else branch_no end branch_no,
-         |	  appro_amount_avg, remo_amount_avg,
-         |    amount_tend_avg, appro_count_avg,
-         |    remo_count_avg, frequency_tend_avg,
-         |    appro_fare0_avg, remo_fare0_avg,
-         |    fare0_tend_avg, open_d_dvalue_avg,
-         |    appro_amount_med, remo_amount_med,
-         |    amount_tend_med, appro_count_med,
-         |    remo_count_med,frequency_tend_med,
-         |    appro_fare0_med, remo_fare0_med,
-         |    fare0_tend_med, open_d_dvalue_med,
-         |	  approavg_idlerate ,appromed_idlerate ,
-         |    remoteavg_idlerate ,remotemed_idlerate ,
-         |    avg_age,med_age,
-         |	  last_dv_avg,last_dv_med
+         | select case when branch_no is null then  -1 else branch_no end branch_no
+         |	  ,appro_amount_avg, remo_amount_avg
+         |    ,amount_tend_avg, appro_count_avg
+         |    ,remo_count_avg, frequency_tend_avg
+         |    ,appro_fare0_avg, remo_fare0_avg
+         |    ,fare0_tend_avg, open_d_dvalue_avg
+         |    ,appro_amount_med, remo_amount_med
+         |    ,amount_tend_med, appro_count_med
+         |    ,remo_count_med,frequency_tend_med
+         |    ,appro_fare0_med, remo_fare0_med
+         |    ,fare0_tend_med, open_d_dvalue_med
+         |	  ,approavg_idlerate ,appromed_idlerate
+         |    ,remoteavg_idlerate ,remotemed_idlerate
+         |    ,avg_age,med_age
+         |	  ,last_dv_avg,last_dv_med
          |    ,${endDate} input_date
          | from (
          |	 select
-         |		  branch_no
-         |		 ,round(avg(appro_months_amount) ,2)as appro_amount_avg
-         |		 ,round(avg(remo_months_amount),2) as remo_amount_avg
-         |		 ,round(avg(amount_tendency),2) amount_tend_avg
-         |		 ,round(avg(appro_months_count),2) appro_count_avg
-         |		 ,round(avg(remo_months_count),2) remo_count_avg
-         |		 ,round(avg(frequency_tendency),2) frequency_tend_avg
-         |		 ,round(avg(f_fare0_approch),2) appro_fare0_avg
-         |		 ,round(avg(f_fare0_remote),2) remo_fare0_avg
-         |		 ,round(avg(f_fare0_tendency),2) fare0_tend_avg
-         |		 ,round(avg(open_date_dvalue),2)open_d_dvalue_avg
-         |		 ,round(percentile_approx(appro_months_amount,0.5),2) as appro_amount_med
-         |		 ,round(percentile_approx(remo_months_amount,0.5),2) as remo_amount_med
-         |		 ,round(percentile_approx(amount_tendency,0.5),2)amount_tend_med
-         |		 ,round(percentile_approx(appro_months_count,0.5),2) appro_count_med
-         |		 ,round(percentile_approx(remo_months_count,0.5),2) remo_count_med
-         |		 ,round(percentile_approx(frequency_tendency,0.5),2) frequency_tend_med
-         |		 ,round(percentile_approx(f_fare0_approch,0.5),2) appro_fare0_med
-         |		 ,round(percentile_approx(f_fare0_remote,0.5),2) remo_fare0_med
-         |		 ,round(percentile_approx(f_fare0_tendency,0.5),2) fare0_tend_med
-         |		 ,round(percentile_approx(open_date_dvalue,0.5),2) open_d_dvalue_med
-         |		 ,round(avg(approch_idle_rate),2) approavg_idlerate
-         |		 ,round(percentile_approx(approch_idle_rate,0.5),2) appromed_idlerate
-         |		 ,round(avg(remote_idle_rate),2) remoteavg_idlerate
-         |		 ,round(percentile_approx(remote_idle_rate,0.5),2) remotemed_idlerate
-         |		 ,round(avg(age),2) avg_age
-         |		 ,round(percentile_approx(age,0.5),2) med_age
-         |		 ,round(avg(lastdate_dvalue),2) last_dv_avg
-         |		 ,round(percentile_approx(lastdate_dvalue,0.5),2) last_dv_med
-         |	from  dm_deliver_stat
-         | group by branch_no,1 grouping sets(branch_no,1)
+         |		  a.branch_no
+         |		 ,round(avg(a.appro_months_amount) ,2)as appro_amount_avg
+         |		 ,round(avg(a.remo_months_amount),2) as remo_amount_avg
+         |		 ,round(avg(a.amount_tendency),2) amount_tend_avg
+         |		 ,round(avg(a.appro_months_count),2) appro_count_avg
+         |		 ,round(avg(a.remo_months_count),2) remo_count_avg
+         |		 ,round(avg(a.frequency_tendency),2) frequency_tend_avg
+         |		 ,round(avg(a.f_fare0_approch),2) appro_fare0_avg
+         |		 ,round(avg(a.f_fare0_remote),2) remo_fare0_avg
+         |		 ,round(avg(a.f_fare0_tendency),2) fare0_tend_avg
+         |		 ,round(avg(a.open_date_dvalue),2)open_d_dvalue_avg
+         |		 ,round(percentile_approx(a.appro_months_amount,0.5),2) as appro_amount_med
+         |		 ,round(percentile_approx(a.remo_months_amount,0.5),2) as remo_amount_med
+         |		 ,round(percentile_approx(a.amount_tendency,0.5),2)amount_tend_med
+         |		 ,round(percentile_approx(a.appro_months_count,0.5),2) appro_count_med
+         |		 ,round(percentile_approx(a.remo_months_count,0.5),2) remo_count_med
+         |		 ,round(percentile_approx(a.frequency_tendency,0.5),2) frequency_tend_med
+         |		 ,round(percentile_approx(a.f_fare0_approch,0.5),2) appro_fare0_med
+         |		 ,round(percentile_approx(a.f_fare0_remote,0.5),2) remo_fare0_med
+         |		 ,round(percentile_approx(a.f_fare0_tendency,0.5),2) fare0_tend_med
+         |		 ,round(percentile_approx(a.open_date_dvalue,0.5),2) open_d_dvalue_med
+         |		 ,round(avg(b.approch_idle_rate),2) approavg_idlerate
+         |		 ,round(percentile_approx(b.approch_idle_rate,0.5),2) appromed_idlerate
+         |		 ,round(avg(b.remote_idle_rate),2) remoteavg_idlerate
+         |		 ,round(percentile_approx(b.remote_idle_rate,0.5),2) remotemed_idlerate
+         |		 ,round(avg(a.age),2) avg_age
+         |		 ,round(percentile_approx(a.age,0.5),2) med_age
+         |		 ,round(avg(a.lastdate_dvalue),2) last_dv_avg
+         |		 ,round(percentile_approx(a.lastdate_dvalue,0.5),2) last_dv_med
+         |	from  dm_deliver_stat a
+         |  left join dm_custtotalasset_dm_stat b on a.c_custno = b.c_custno
+         |  group by a.branch_no,1 grouping sets(a.branch_no,1)
          |	)
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
     dmDeliverCaclDF.createOrReplaceTempView("dmDeliverCaclTmp")
-    spark.sql("insert into dm_deliver_cacl  select * from dmDeliverCaclTmp ")
+
+    spark.sql("insert  overwrite table   dm_deliver_cacl  select * from dmDeliverCaclTmp ")
 
     spark.sql(
       s"""
@@ -243,10 +294,11 @@ class DmDeliverProc {
          |		open_date_all_rank double,
          |		peakasset_all_rank  double,
          |    input_date int
-         | ) ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
+         | )  PARTITIONED BY (input_date int)
+         | ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
          | LINES TERMINATED BY ${raw"'\n'"}
          | stored as textfile
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     val dmDeliverRankDF = spark.sql(
       s"""
@@ -285,29 +337,38 @@ class DmDeliverProc {
          |			,(case when amount_tendency = 0 then -1   else round(( ${clientCount} - trade_all_amount_rk ) * 100 / ${clientCount} , 2 ) end ) trade_all_amount_rank
          |			,(case when frequency_tendency = 0 then -1  else round(( ${clientCount}  - trade_all_frequency_rk ) * 100 / ${clientCount}  , 2 ) end )  trade_all_frequency_rank
          |			,(case when l_date = 0 and lastdate_dvalue = 100 then  -1
-         |			,       when l_date = 0 and lastdate_dvalue  = 200 then  -1
-         |			,       when l_date = 0 and lastdate_dvalue  = 400 then  -1
-         |			,       else round((${clientCount} - last_all_trade_time_rk)  * 100 / ${clientCount} ,2) end ) last_all_trade_time_rank
+         |			       when l_date = 0 and lastdate_dvalue  = 200 then  -1
+         |			       when l_date = 0 and lastdate_dvalue  = 400 then  -1
+         |			      else round((${clientCount} - last_all_trade_time_rk)  * 100 / ${clientCount} ,2) end ) last_all_trade_time_rank
          |			,(case when f_fare0_tendency = 0  then -1 else round(( ${clientCount} -fare0_all_tend_rk ) * 100 / ${clientCount} , 2) end ) fare0_all_tend_rank
          |			,(case when f_fare0_approch = 0 then   -1 else round((${clientCount} - fare0_all_rk ) * 100 / ${clientCount}, 2) end ) fare0_all_rank
          |			,round((${clientCount} - open_date_all_rk ) * 100 / ${clientCount} , 2)   open_date_all_rank
          |			,(case when peak_vasset = 0  then -1 else round((${clientCount} - peakasset_all_rk) * 100 / ${clientCount} , 2) end ) peakasset_all_rank
          |		from (
-         |			select  c_custno
-         |					,branch_no
-         |					,dense_rank() over (partition by a.branch_no order by amount_tendency desc ) trade_b_amount_rk
-         |					,dense_rank() over (partition by a.branch_no order by frequency_tendency desc ) trade_b_frequency_rk
-         |					,dense_rank() over (partition by a.branch_no order by lastdate_dvalue asc ) last_b_trade_time_rk
-         |					,dense_rank() over (partition by a.branch_no order by f_fare0_tendency desc) fare0_b_tend_rk
-         |					,dense_rank() over (partition by a.branch_no order by f_fare0_approch  desc ) fare0_b_rk
-         |					,dense_rank() over (partition by a.branch_no order by open_date_dvalue desc ) open_data_b_rk
+         |			select
+         |          a.c_custno
+         |					,a.branch_no
+         |          ,a.l_date
+         |          ,a.lastdate_dvalue
+         |          ,a.f_fare0_tendency
+         |          ,a.f_fare0_approch
+         |          ,b.peak_vasset
+         |          ,a.amount_tendency
+         |          ,a.frequency_tendency
+         |
+         |					,dense_rank() over (partition by a.branch_no order by a.amount_tendency desc ) trade_b_amount_rk
+         |					,dense_rank() over (partition by a.branch_no order by a.frequency_tendency desc ) trade_b_frequency_rk
+         |					,dense_rank() over (partition by a.branch_no order by a.lastdate_dvalue asc ) last_b_trade_time_rk
+         |					,dense_rank() over (partition by a.branch_no order by a.f_fare0_tendency desc) fare0_b_tend_rk
+         |					,dense_rank() over (partition by a.branch_no order by a.f_fare0_approch  desc ) fare0_b_rk
+         |					,dense_rank() over (partition by a.branch_no order by a.open_date_dvalue desc ) open_data_b_rk
          |					,dense_rank() over (partition by a.branch_no order by b.peak_vasset desc ) peakasset_b_rk
-         |					,dense_rank() over (order by amount_tendency desc)    trade_all_amount_rk
-         |					,dense_rank() over (order by frequency_tendency desc) trade_all_frequency_rk
-         |					,dense_rank() over (order by lastdate_dvalue asc ) last_all_trade_time_rk
-         |					,dense_rank() over (order by f_fare0_tendency desc) fare0_all_tend_rk
-         |					,dense_rank() over (order by f_fare0_approch desc ) fare0_all_rk
-         |					,dense_rank() over (order by open_date_dvalue desc ) open_date_all_rk
+         |					,dense_rank() over (order by a.amount_tendency desc)    trade_all_amount_rk
+         |					,dense_rank() over (order by a.frequency_tendency desc) trade_all_frequency_rk
+         |					,dense_rank() over (order by a.lastdate_dvalue asc ) last_all_trade_time_rk
+         |					,dense_rank() over (order by a.f_fare0_tendency desc) fare0_all_tend_rk
+         |					,dense_rank() over (order by a.f_fare0_approch desc ) fare0_all_rk
+         |					,dense_rank() over (order by a.open_date_dvalue desc ) open_date_all_rk
          |					,dense_rank() over (order by b.peak_vasset desc )  peakasset_all_rk
          |          ,c.client_cnt as v_branch_count
          |		 from dmDeliverStatTmp a
@@ -315,9 +376,9 @@ class DmDeliverProc {
          |     left join dm_branch_client_cnt c on a.branch_no = c.branch_no
          |			)
          |	)
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
     dmDeliverRankDF.createOrReplaceTempView("dmDeliverRankTmp")
-    spark.sql("insert into dm_deliver_rank select * from dmDeliverRankTmp ")
+    spark.sql(s"insert  overwrite table   dm_deliver_rank  PARTITION( input_date=${endDate} ) select * from dmDeliverRankTmp ")
 
     spark.stop()
 

@@ -68,8 +68,7 @@ class CalculateData {
     val custnoCountRDD = spark.sql("select c_custno from calDataTmp where input_date = " + inputDate)
     val custnoCount = custnoCountRDD.count().toInt
 
-    spark.sql("delete from bigdata.cal_data_tb  where input_date = "+ inputDate )
-    spark.sql("insert into bigdata.cal_data_tb select * from calDataTmp ")
+    spark.sql("insert overwrite table  bigdata.cal_data_tb select * from calDataTmp ")
 
     //--计算各指标
     //--计算各营业部各指标的均值、中值(营业部所有客户的均值/中值)

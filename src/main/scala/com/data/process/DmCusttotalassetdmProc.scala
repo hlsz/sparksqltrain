@@ -4,11 +4,19 @@ import com.data.utils.DateUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
+object DmCusttotalassetdmProc {
+  def main(args: Array[String]): Unit = {
+    new DmCusttotalassetdmProc().custtotalassetdmProc(20190401,3)
+
+  }
+
+}
+
 class DmCusttotalassetdmProc {
 
   val conf = new SparkConf()
     .setAppName("DmCusttotalassetdmProc")
-    .setMaster("yarn-client")
+//    .setMaster("yarn-client")
 
   val spark = SparkSession
     .builder()
@@ -17,10 +25,15 @@ class DmCusttotalassetdmProc {
     .config("spark.sql.parquet.writeLegacyFormat", true)
     .config("spark.sql.warehouse.dir", "/user/hive/warehouse/bigdata.db")
     //数据倾斜
-    .config("spark.sql.shuffle.partitions", 200)
+//    .config("spark.sql.shuffle.partitions", 30)
     .enableHiveSupport()
     .getOrCreate()
 
+  // 设置参数
+  // hive > set  hive.exec.dynamic.partition.mode = nonstrict;
+  // hive > set  hive.exec.dynamic.partition = true;
+  spark.sql("set  hive.exec.dynamic.partition.mode = nonstrict")
+  spark.sql("set  hive.exec.dynamic.partition = true")
 
   /**
     *
@@ -73,7 +86,10 @@ class DmCusttotalassetdmProc {
          |	left join bigdata.custtotalasset_dm cd on c.c_custno = cd.cust_no
          |	where cd.oc_date >= ${startDate} and cd.oc_date < ${endDate}
          |	) t
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
+
+
+
     dmCusttotalassetDmDF.createOrReplaceTempView("dmCusttotalassetDmTmp")
 
     spark.sql(
@@ -87,20 +103,24 @@ class DmCusttotalassetdmProc {
          |		remote_idle_rate double,
          |		idle_rate_tendency double,
          |    input_date int
-         | ) ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
+         | )  PARTITIONED BY (input_date int)
+         |  ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
          | LINES TERMINATED BY ${raw"'\n'"}
          | stored as textfile
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     val dmCusttotalassetdmStatDF = spark.sql(
       s"""
-         | select client_id,branch_no,
-         |  c_custno,balance_sum,
-         |  total_assbal_sum,peak_vasset,
-         |	approch_idle_rate,
-         |	remote_idle_rate,
-         |	idle_rate_tendency,
-         |  ${endDate} input_date
+         | select client_id,
+         | branch_no,
+         | c_custno,
+         | balance_sum,
+         | total_assbal_sum,
+         | peak_vasset,
+         | approch_idle_rate,
+         | remote_idle_rate,
+         | idle_rate_tendency,
+         | ${endDate} input_date
          | from (
          |		select 	client_id,branch_no,c_custno,balance_sum,total_assbal_sum,peak_vasset,
          |				approch_idle_rate,
@@ -129,10 +149,10 @@ class DmCusttotalassetdmProc {
          |					)
          |			 )
          |		)
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
     dmCusttotalassetdmStatDF.createOrReplaceTempView("dmCusttotalassetdmStatTmp")
 
-    spark.sql("insert into dm_custtotalasset_dm_stat select * from  dmCusttotalassetdmStatTmp ")
+    spark.sql("insert  overwrite table   dm_custtotalasset_dm_stat select * from  dmCusttotalassetdmStatTmp ")
 
 
     spark.sql(
@@ -143,10 +163,11 @@ class DmCusttotalassetdmProc {
          | ,peak_vasset_avg double
          | ,peak_vasset_med double
          | ,input_date int
-         | ) ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
+         | )  PARTITIONED BY (input_date int)
+         | ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
          | LINES TERMINATED BY ${raw"'\n'"}
          | stored as textfile
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     val dmCusttotalassetDmCaclDF = spark.sql(
       s"""
@@ -162,10 +183,10 @@ class DmCusttotalassetdmProc {
          |	 from dmCusttotalassetdmStatTmp
          |	group by branch_no,1 grouping sets(branch_no,1)
          |	)
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
     dmCusttotalassetDmCaclDF.createOrReplaceTempView("dmCusttotalassetDmCaclTmp")
 
-    spark.sql("insert into dm_custtotalasset_dm_cacl select * from dmCusttotalassetDmCaclTmp ")
+    spark.sql("insert  overwrite table   dm_custtotalasset_dm_cacl select * from dmCusttotalassetDmCaclTmp ")
 
     spark.stop()
 

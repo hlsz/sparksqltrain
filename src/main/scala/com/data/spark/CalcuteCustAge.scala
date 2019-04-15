@@ -55,7 +55,6 @@ class CalcuteCustAge {
 
       s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")
-    spark.sql("delete from  bigdata.result_custage  where input_date = "+ calYear)
 
     spark.sql(
       s"""
@@ -92,7 +91,6 @@ class CalcuteCustAge {
 
       s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")
-    spark.sql("delete from  bigdata.result_branchage  where input_date = "+ calYear)
 
     spark.sql(
       s"""

@@ -80,7 +80,6 @@ class BankBondCalculte {
       s" LINES TERMINATED BY ${raw"'\n'"} " +
       " stored as textfile ")
 
-    spark.sql("delete from bigdata.banktransfer_result_tb where input_date = "+calcuDate+"")
 
     spark.sql(
       s"""

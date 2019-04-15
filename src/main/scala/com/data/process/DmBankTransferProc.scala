@@ -4,22 +4,37 @@ import com.data.utils.DateUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
+object DmBankTransferProc {
+  def main(args: Array[String]): Unit = {
+    new DmBankTransferProc().bankTransferProc(20190401,3)
+
+  }
+
+}
+
 class DmBankTransferProc {
 
-  val conf = new SparkConf()
+  private val conf = new SparkConf()
     .setAppName("DmBankTransferProc")
-    .setMaster("yarn-client")
+//    .setMaster("yarn-client")
 
-  val spark = SparkSession
+  private val spark = SparkSession
     .builder()
     .config(conf)
     //解决DecimalType存储精度问题， parquet格式 spark和hive不统一
     .config("spark.sql.parquet.writeLegacyFormat", true)
     .config("spark.sql.warehouse.dir", "/user/hive/warehouse/bigdata.db")
     //数据倾斜
-    .config("spark.sql.shuffle.partitions", 200)
+//    .config("spark.sql.shuffle.partitions", 30)
     .enableHiveSupport()
     .getOrCreate()
+
+
+  // 设置参数
+  // hive > set  hive.exec.dynamic.partition.mode = nonstrict;
+  // hive > set  hive.exec.dynamic.partition = true;
+  spark.sql("set  hive.exec.dynamic.partition.mode = nonstrict")
+  spark.sql("set  hive.exec.dynamic.partition = true")
 
   /**
     *
@@ -55,9 +70,18 @@ class DmBankTransferProc {
 
     val dmBanktransferDF = spark.sql(
       s"""
-         | select t.c_custno,t.client_id,t.branch_no,t.open_date,t.organ_flag,t.birthday,
-         |	   t.occur_balance,trans_type,curr_date
-         | from ( select  c.c_custno,
+         | select
+         | t.c_custno
+         | ,t.client_id
+         | ,t.branch_no
+         | ,t.open_date
+         | ,t.organ_flag
+         | ,t.birthday
+         | ,t.occur_balance
+         | ,trans_type
+         | ,curr_date
+         | from ( select
+         |         c.c_custno,
          |			   c.client_id,
          |			   c.branch_no,
          |			   c.open_date,
@@ -67,14 +91,16 @@ class DmBankTransferProc {
          |			   b.trans_type,
          |			   b.curr_date
          |		from hs08_client_for_ai c
-         |		left join (select client_id, c_custno, curr_date, bktrans_status, trans_type, nvl(occur_balance, '0') occur_balance
+         |		left join (select client_id,concat('c',client_id) c_custno, curr_date, bktrans_status, trans_type, nvl(occur_balance, '0') occur_balance
          |						  from bigdata.hs08_his_banktransfer
          |						  where bktrans_status = '2' and trans_type in ('01', '02')
          |					) b on  a.c_custno = b.c_custno
          |		where b.curr_date >= ${startDate} and curr_date <  ${endDate}
          |	) t
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
     dmBanktransferDF.createOrReplaceTempView("dmBanktransferTmp")
+
+    // alter table partition_test add partition (stat_date='20110728',province='henan');
 
     spark.sql(
       s"""
@@ -102,10 +128,12 @@ class DmBankTransferProc {
          | frequency_dvalue_tendency double,
          | sum_dvalue_tendency double,
          | input_date int
-         | ) ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
+         | )
+         | PARTITIONED BY (input_date int)
+         | ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
          | LINES TERMINATED BY ${raw"'\n'"}
          | stored as textfile
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     val dmBanktransferStatDF = spark.sql(
       s"""
@@ -145,14 +173,14 @@ class DmBankTransferProc {
          |			(appro_in_sum - appro_out_sum) appro_sum_dvalue
          |	from (
          |			select c_custno,branch_no,client_id,
-         |					case when data_months = ${minIntervalValResult} and trans_type = '01' then count(client_id) end appro_in_frequency,
-         |					case when data_months = ${minIntervalValResult}  and trans_type = '02' then count(client_id) end appro_out_frequency,
-         |					case when data_months = ${minIntervalValResult}  and trans_type = '01' then sum(occur_balance) end  appro_in_sum,
-         |					case when data_months = ${minIntervalValResult}  and trans_type = '02' then sum(occur_balance) end appro_out_sum,
-         |					case when data_months = ${maxIntervalVal} and trans_type = '01' then count(client_id) end  remote_in_frequency,
-         |					case when data_months = ${maxIntervalVal} and trans_type = '02' then count(client_id) end remot_out_frequency,
-         |					case when data_months = ${maxIntervalVal} and trans_type = '01' then sum(occur_balance) end remot_in_sum,
-         |					case when data_months = ${maxIntervalVal} and trans_type = '02' then sum(occur_balance) end remot_out_sum
+         |					count(case when data_months = ${minIntervalValResult} and trans_type = '01' then client_id else null end ) appro_in_frequency,
+         |					count(case when data_months = ${minIntervalValResult}  and trans_type = '02' then client_id else null end ) appro_out_frequency,
+         |					sum(case when data_months = ${minIntervalValResult}  and trans_type = '01' then occur_balance else 0 end )  appro_in_sum,
+         |					sum(case when data_months = ${minIntervalValResult}  and trans_type = '02' then occur_balance else 0 end ) appro_out_sum,
+         |					count(case when data_months = ${maxIntervalVal} and trans_type = '01' then client_id else null end ) remote_in_frequency,
+         |					count(case when data_months = ${maxIntervalVal} and trans_type = '02' then client_id else null end ) remot_out_frequency,
+         |					sum(case when data_months = ${maxIntervalVal} and trans_type = '01' then occur_balance else 0 end ) remot_in_sum,
+         |					sum(case when data_months = ${maxIntervalVal} and trans_type = '02' then occur_balance else 0 end ) remot_out_sum
          |			from (
          |				   select  c_custno,
          |						       client_id,
@@ -162,16 +190,16 @@ class DmBankTransferProc {
          |						       birthday,
          |						       occur_balance,
          |						       trans_type,
-         |						       months_between(${endDateFormatStr} , concat(substr(curr_date,0,4),'-',substr(curr_date,5,2),'-',substr(curr_date,7,2)) ) data_months
+         |						       months_between('${endDateFormatStr}', concat(substr(curr_date,0,4),'-',substr(curr_date,5,2),'-',substr(curr_date,7,2)) ) data_months
          |				     from dmBanktransferTmp
          |			    ) t
          |      group by  c_custno,branch_no,client_id
          |		)
          |	)
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     dmBanktransferStatDF.createOrReplaceTempView("dmBanktransferStatTmp")
-    spark.sql("insert into  dm_banktransfer_stat select * from dmBanktransferStatTmp")
+    spark.sql("insert  overwrite table    dm_banktransfer_stat select * from dmBanktransferStatTmp")
 
     spark.sql(
       s"""
@@ -185,10 +213,12 @@ class DmBankTransferProc {
          |		,medsumdvaluetendency double,medfrequdvaluetendency double,remo_avginsum double,remo_avgoutsum double,remo_avginfrequ double,remo_avgoutfrequ double
          |		,remo_avgsumdvalue double,remo_avgfrequdvalue double,remo_medinsum double,remo_medoutsum double,remo_medinfrequ double,remo_medoutfrequ double,remo_medsumdvalue double
          |		,remo_medfrequdvalue double, input_date int
-         | ) ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
+         | )
+         |  PARTITIONED BY (input_date int)
+         |  ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
          | LINES TERMINATED BY ${raw"'\n'"}
          | stored as textfile
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     val dmBanktransferCaclDF = spark.sql(
       s"""
@@ -243,10 +273,10 @@ class DmBankTransferProc {
          |	from dmBanktransferStatTmp
          |	group  by branch_no,1 grouping sets(branch_no,1)
          |   )
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     dmBanktransferCaclDF.createOrReplaceTempView("dmBanktransferCaclTmp")
-    spark.sql("insert into dm_banktransfer_cacl  select * from dmBanktransferCaclTmp ")
+    spark.sql("insert  overwrite table   dm_banktransfer_cacl  select * from dmBanktransferCaclTmp ")
 
     val  clientCountDF = spark.sql("select c_custno from hs08_client_for_ai")
     val clientCount = clientCountDF.count().toInt
@@ -282,10 +312,12 @@ class DmBankTransferProc {
          |    ,superbra_sumdvaten double
          |    ,superbra_fredvaten double
          |    ,input_date int
-         | ) ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
+         | )
+         | PARTITIONED BY (input_date int)
+         | ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
          | LINES TERMINATED BY ${raw"'\n'"}
          | stored as textfile
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     val dmDeliverRankDF = spark.sql(
       s"""
@@ -321,12 +353,12 @@ class DmBankTransferProc {
          |	select
          |		 c_custno
          |		 ,a.branch_no
-         |		 ,case when appro_in_sum=0 then 0 else round((${clientCount} -nvl(a.supercom_apprinsum,${clientCount}) ) * 100 /v_all_count ,2) end		supercom_apprinsum
-         |		 ,case when appro_out_sum=0 then 0 else round((${clientCount} -nvl(a.supercom_approutsum,${clientCount}) ) * 100 /v_all_count ,2) end		supercom_approutsum
-         |		 ,case when appro_in_frequency=0 then 0 else round((${clientCount} -nvl(a.supercom_apprinfre,${clientCount}) ) * 100 /v_all_count ,2) end		supercom_apprinfre
-         |		 ,case when appro_out_frequency=0 then 0 else round((${clientCount} -nvl(a.supercom_approutfre,${clientCount}) ) * 100 /v_all_count ,2) end		supercom_approutfre
+         |		 ,case when appro_in_sum=0 then 0 else round((${clientCount} -nvl(a.supercom_apprinsum,${clientCount}) ) * 100 /${clientCount} ,2) end		supercom_apprinsum
+         |		 ,case when appro_out_sum=0 then 0 else round((${clientCount} -nvl(a.supercom_approutsum,${clientCount}) ) * 100 /${clientCount} ,2) end		supercom_approutsum
+         |		 ,case when appro_in_frequency=0 then 0 else round((${clientCount} -nvl(a.supercom_apprinfre,${clientCount}) ) * 100 /${clientCount} ,2) end		supercom_apprinfre
+         |		 ,case when appro_out_frequency=0 then 0 else round((${clientCount} -nvl(a.supercom_approutfre,${clientCount}) ) * 100 /${clientCount} ,2) end		supercom_approutfre
          |		 ,round((${clientCount} -nvl(a.supercom_apprsumdva,${clientCount}) ) * 100 /${clientCount} ,2)		supercom_apprsumdva
-         |		 ,case when appro_frequency_dvalue<=0 then 0 else round((${clientCount} -nvl(a.supercom_apprfredva,${clientCount}) ) * 100 /v_all_count ,2) end		supercom_apprfredva
+         |		 ,case when appro_frequency_dvalue<=0 then 0 else round((${clientCount} -nvl(a.supercom_apprfredva,${clientCount}) ) * 100 /${clientCount} ,2) end		supercom_apprfredva
          |		 ,round((${clientCount} -nvl(a.supercom_insumten,${clientCount}) ) * 100 /${clientCount} ,2)		supercom_insumten
          |		 ,round((${clientCount} -nvl(a.supercom_outsumten,${clientCount}) ) * 100 /${clientCount} ,2)		supercom_outsumten
          |		 ,round((${clientCount} -nvl(a.supercom_infreten,${clientCount}) ) * 100 /${clientCount} ,2)		supercom_infreten
@@ -384,11 +416,11 @@ class DmBankTransferProc {
          |     left join dm_branch_client_cnt b on bs.branch_no = b.branch_no
          |    ) a
          |	)
-       """.stripMargin)
+       """.stripMargin.replace("\r\n"," "))
 
     dmDeliverRankDF.createOrReplaceTempView("dmDeliverRankTmp")
 
-    spark.sql("insert into dm_banktransfer_rank select * from dmDeliverRankTmp")
+    spark.sql("insert  overwrite table   dm_banktransfer_rank select * from dmDeliverRankTmp")
 
     spark.stop()
 

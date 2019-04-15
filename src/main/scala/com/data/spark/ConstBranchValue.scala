@@ -127,7 +127,6 @@ class ConstBranchValue {
          | stored as textfile
        """.stripMargin  )
 
-    spark.sql("delete from  bigdata.result_branchavgmed  where input_date = "+ inputDate)
 
     spark.sql(
       s"""

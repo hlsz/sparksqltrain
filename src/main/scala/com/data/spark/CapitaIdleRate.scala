@@ -73,7 +73,6 @@ class CapitaIdleRate {
        """.stripMargin)
     calRemoteCapitalIdleDF.createOrReplaceTempView("calRemoteCapitalIdleTmp")
 
-    spark.sql("delete from capital_idal_rate_tb where input_date = "+ calcuDate)
     spark.sql(" create table if not exists capital_idal_rate_tb " +
       " ( c_custno string, branch_no string, client_id int, approch_idle_rate double, remote_idle_rate double, " +
       " idle_rate_tendency double, input_date int ) " +
@@ -112,7 +111,7 @@ class CapitaIdleRate {
        """.stripMargin)
 
     capitalIdalRateDF.createOrReplaceTempView("capitalIdalRateTmp")
-    spark.sql("insert into capital_idal_rate_tb select * from capitalIdalRateTmp")
+    spark.sql("insert overwrite table  capital_idal_rate_tb select * from capitalIdalRateTmp")
 
 
     val countAllClientDF = spark.sql("select client_id from c_cust_branch_tb ")
@@ -189,7 +188,6 @@ class CapitaIdleRate {
          | stored as textfile
        """.stripMargin)
 
-    spark.sql("delete from bigdata.result_branchidle where input_date = " + calcuDate)
 
     spark.sql(
       s"""

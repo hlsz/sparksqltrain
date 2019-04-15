@@ -84,7 +84,6 @@ class ConstAggrateFactor {
          | stored as textfile
        """.stripMargin)
 
-    spark.sql("delete from   bigdata.const_aggratefacort where input_date =  " +inputDate )
 
     spark.sql(
       s"""

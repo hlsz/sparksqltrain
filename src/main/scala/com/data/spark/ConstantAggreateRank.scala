@@ -143,7 +143,6 @@ class ConstantAggreateRank {
          |
          | stored as textfile
        """.stripMargin)
-    spark.sql("delete from  bigdata.custresult_aggreatecol where input_date = "+ inputDate)
 
     spark.sql(
       s"""
