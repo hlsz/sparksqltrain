@@ -1,6 +1,7 @@
 package com.data.process
 
 import org.apache.spark.SparkConf
+import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 trait DataProcessTrait {
@@ -15,18 +16,17 @@ trait DataProcessTrait {
 
 case class clientForAI(id:Long,name:String)
 
-class DataProcess extends  DataProcessTrait{
+class DataProcess extends  DataProcessTrait {
   private val conf = new SparkConf()
     .setAppName("DataProcess")
     //rdd压缩  只有序列化后的RDD才能使用压缩机制
     .set("spark.rdd.compress", "true")
-
     //设置并行度
     .set("spark.default.parallelism", "100")
     //使用Kryo序列化库
-    .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    .set("spark.kryo.registrationRequired", "true")
-    .registerKryoClasses(Array(classOf[clientForAI], classOf[scala.collection.mutable.WrappedArray.ofRef[_]]))
+//    .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+//    .set("spark.kryo.registrationRequired", "true")
+//    .registerKryoClasses(Array(classOf[scala.collection.mutable.WrappedArray.ofRef[_]], classOf[clientForAI]))
     //优化shuffle 读写
     .set("spark.shuffle.file.buffer","128k")
     .set("spark.reducer.maxSizeInFlight","96M")
@@ -34,7 +34,7 @@ class DataProcess extends  DataProcessTrait{
     .set("spark.shuffle.consolidateFiles", "true")
   //设置executor堆外内存
   //    .set("spark.yarn.executor.memoryOverhead","2048M")
-  //    .setMaster("yarn-client")
+      .setMaster("local")
 
   val spark = SparkSession
     .builder()
@@ -49,6 +49,14 @@ class DataProcess extends  DataProcessTrait{
 
   val sc =  spark.sparkContext
 
+
+  val tblName = "hive_table"
+
+  def dropPartitions(tblName: String,sqlContext :HiveContext): Unit = {
+
+    sqlContext.sql(s"msck repair table $tblName")
+
+  }
 
   override def extractData(path: String): DataFrame = {
     import spark.implicits._
@@ -96,8 +104,56 @@ class DataProcess extends  DataProcessTrait{
     wordC.saveAsTextFile("hdfs://user/spark/out/wordC")
     wordC.toDF()
 
+  }
 
+
+
+  def mapDemo: Unit ={
+    var datasRdd = sc.parallelize(Array(1,2,3,4,5,6,7,8), 2)
+    var result = datasRdd.map(x => x * 2)
+    result.foreach(println(_))
+    sc.stop()
 
   }
 
+  def filterDemo: Unit = {
+    var datasRdd = sc.parallelize(Array(1,2,3,4,5,6,7,8))
+    var result = datasRdd.filter(x => x % 2 != 0)
+    result.foreach(println(_))
+    sc.stop()
+  }
+
+  def groupByKeyDemo: Unit = {
+
+    var dataRDD = sc.parallelize(Array(Tuple2("class1",90),Tuple2("class1",91),
+      Tuple2("class2",91), Tuple2("class2",93)))
+    var result = dataRDD.groupByKey()
+    result.foreach(it => {
+      println(it._1)
+      println(it._2.toString())})
+    sc.stop()
+
+  }
+
+  def reduceByKeyDemo: Unit = {
+    var dataRDD = sc.parallelize(Array(Tuple2("class1",90),Tuple2("class1",91),Tuple2("class2",92),Tuple2("class2",93)))
+    var result = dataRDD.reduceByKey(_+_)
+    result.foreach(it => {
+      println(it._1)
+      println(it._2)})
+    sc.stop()
+  }
+
+  def joinDemo: Unit = {
+    val stuRDD = sc.parallelize(Array(Tuple2(1,"zhangsan"),Tuple2(2,"lisi"), Tuple2(3,"liuwe"),Tuple2(4,"")))
+  }
+
+
+}
+object DataProcess{
+
+  def main(args: Array[String]): Unit = {
+
+      new DataProcess().reduceByKeyDemo
+   }
 }

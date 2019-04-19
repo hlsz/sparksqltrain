@@ -16,14 +16,17 @@ object BizProcessMain {
     .set("spark.rdd.compress", "true")
 
   //设置并行度
-    .set("spark.default.parallelism", "100")
+    .set("spark.default.parallelism", "24")
     //使用Kryo序列化库
     .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     .set("spark.kryo.registrationRequired", "true")
     .registerKryoClasses(Array(classOf[Info], classOf[scala.collection.mutable.WrappedArray.ofRef[_]]))
     //优化shuffle 读写
     .set("spark.shuffle.file.buffer","128k")
+
     .set("spark.reducer.maxSizeInFlight","96M")
+    //优化kryo缓存存放class大小
+    .set("spark.kryoserializer.buffer.mb","155")
     //合并map端输出文件
     .set("spark.shuffle.consolidateFiles", "true")
     //设置executor堆外内存
