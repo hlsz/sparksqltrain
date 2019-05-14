@@ -13,22 +13,22 @@ object BizProcessMain {
   private val conf = new SparkConf()
     .setAppName("BizProcessMain")
     //rdd压缩  只有序列化后的RDD才能使用压缩机制
-    .set("spark.rdd.compress", "true")
+//    .set("spark.rdd.compress", "true")
 
   //设置并行度
-    .set("spark.default.parallelism", "24")
-    //使用Kryo序列化库
-    .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    .set("spark.kryo.registrationRequired", "true")
-    .registerKryoClasses(Array(classOf[Info], classOf[scala.collection.mutable.WrappedArray.ofRef[_]]))
+//    .set("spark.default.parallelism", "24")
+//    //使用Kryo序列化库
+//    .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+//    .set("spark.kryo.registrationRequired", "true")
+//    .registerKryoClasses(Array(classOf[Info], classOf[scala.collection.mutable.WrappedArray.ofRef[_]]))
     //优化shuffle 读写
-    .set("spark.shuffle.file.buffer","128k")
-
-    .set("spark.reducer.maxSizeInFlight","96M")
-    //优化kryo缓存存放class大小
-    .set("spark.kryoserializer.buffer.mb","155")
-    //合并map端输出文件
-    .set("spark.shuffle.consolidateFiles", "true")
+//    .set("spark.shuffle.file.buffer","128k")
+//
+//    .set("spark.reducer.maxSizeInFlight","96M")
+//    //优化kryo缓存存放class大小
+//    .set("spark.kryoserializer.buffer.mb","155")
+//    //合并map端输出文件
+//    .set("spark.shuffle.consolidateFiles", "true")
     //设置executor堆外内存
 //    .set("spark.yarn.executor.memoryOverhead","2048M")
 //    .setMaster("yarn-client")
@@ -56,50 +56,27 @@ object BizProcessMain {
 
     spark.sql("use bigdata")
 
-    spark.sql(
-      s"""
-         | create table if not exists dm_branch_client_cnt
-         | (
-         | branch_no string
-         | ,client_cnt int
-         | ) ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
-         | LINES TERMINATED BY ${raw"'\n'"}
-         | stored as textfile
-     """.stripMargin)
-    val branchClientCntDF = spark.sql(
-      s"""
-         | select
-         | case when branch_no is null or branch_no='' then -1 else branch_no end branch_no
-         | ,client_cnt
-         | from (
-         |      select   branch_no, count(*) client_cnt
-         |      from  hs08_client_for_ai
-         |      group by branch_no
-         |     )
-       """.stripMargin.replace("\r\n"," "))
-    branchClientCntDF.createOrReplaceTempView("branchClientCntTmp")
-
-    spark.sql("insert overwrite table  dm_branch_client_cnt select * from branchClientCntTmp ")
+    if (args.length < 2){ System.exit(0); println("参数错误! 请输入正确的参数. BizProcessMain 20190401 3 1 ")}
 
     var calcuDate = args(0).toInt
     var maxIntervalVal = args(1).toInt
 
-    if (args.length == 2)
+    if (args.length < 3)
       {
         new DmCusttotalassetdmProc().custtotalassetdmProc(calcuDate, maxIntervalVal)
         new  DmDeliverProc().deliverProc(calcuDate, maxIntervalVal)
         new DmBankTransferProc().bankTransferProc(calcuDate, maxIntervalVal)
 
-      } else if (args.length == 3){
+      } else {
         var minintervalVal =   args(2).toInt
         new DmCusttotalassetdmProc().custtotalassetdmProc(calcuDate, maxIntervalVal, minintervalVal)
         new  DmDeliverProc().deliverProc(calcuDate, maxIntervalVal, minintervalVal)
         new DmBankTransferProc().bankTransferProc(calcuDate, maxIntervalVal, minintervalVal)
 
-      } else{
-        println("参数错误! 请输入正确的参数. BizProcessMain 20190401 3 1 ")
-        return
-    }
+      }
+
+    //计算客户年龄及排名、均值、中值
+    new CalcuteCustInfo().calcuteCustInfo(calcuDate)
 
     // com.data.process.BizProcessMain 20190401 3
     //spark-submit --principal 'me@DOMAIN.HAD' \ --keytab '/home/me/me.keytab' \

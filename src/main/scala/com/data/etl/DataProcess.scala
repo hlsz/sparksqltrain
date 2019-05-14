@@ -1,4 +1,4 @@
-package com.data.process
+package com.data.etl
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.hive.HiveContext

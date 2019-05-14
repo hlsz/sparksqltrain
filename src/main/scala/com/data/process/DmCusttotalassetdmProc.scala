@@ -25,7 +25,7 @@ class DmCusttotalassetdmProc {
     .config("spark.sql.parquet.writeLegacyFormat", true)
     .config("spark.sql.warehouse.dir", "/user/hive/warehouse/bigdata.db")
     //数据倾斜
-//    .config("spark.sql.shuffle.partitions", 30)
+//    .config("spark.sql.shuffle.partitions", 400)
     .enableHiveSupport()
     .getOrCreate()
 
@@ -71,7 +71,7 @@ class DmCusttotalassetdmProc {
       s"""
          | select
          |	  t.c_custno,t.client_id,t.branch_no,t.open_date,t.organ_flag,t.birthday,
-         |	  t.total_assbal,t.balance
+         |	  t.total_assbal,t.balance, t.oc_date, t.l_date_interval_months
          | from (
          |	select c.c_custno,
          |		   c.client_id,
@@ -81,29 +81,32 @@ class DmCusttotalassetdmProc {
          |		   c.birthday,
          |		   nvl(cd.total_assbal,0) total_assbal,
          |		   nvl(cd.balance,0) balance,
-         |		   cd.oc_date
+         |		   cd.oc_date,
+         |       ceil(months_between('${endDateFormatStr}', concat(substr(cd.oc_date,0,4),'-',substr(cd.oc_date,5,2),'-',substr(cd.oc_date,7,2))  ))  l_date_interval_months
          |	from hs08_client_for_ai c
-         |	left join bigdata.custtotalasset_dm cd on c.c_custno = cd.cust_no
+         |	join bigdata.custtotalasset_dm cd on c.c_custno = cd.cust_no
          |	where cd.oc_date >= ${startDate} and cd.oc_date < ${endDate}
          |	) t
        """.stripMargin.replace("\r\n"," "))
-
-
-
     dmCusttotalassetDmDF.createOrReplaceTempView("dmCusttotalassetDmTmp")
 
+    spark.sql("drop table if exists bigdata.dm_custtotalasset_dm_stat")
     spark.sql(
       s"""
          | create table if not exists bigdata.dm_custtotalasset_dm_stat
          | (
-         |    client_id int,branch_no string,
-         |    c_custno string,balance_sum double,
-         |    total_assbal_sum double, peak_vasset double,
+         |    client_id int,
+         |    branch_no string,
+         |    c_custno string,
+         |    balance_sum double,
+         |    total_assbal_sum double,
+         |    peak_vasset double,
+         |    appr_peak_vasset double,
          |		approch_idle_rate double,
          |		remote_idle_rate double,
          |		idle_rate_tendency double,
          |    input_date int
-         | )  PARTITIONED BY (input_date int)
+         | )  PARTITIONED BY (dt int)
          |  ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
          | LINES TERMINATED BY ${raw"'\n'"}
          | stored as textfile
@@ -117,18 +120,22 @@ class DmCusttotalassetdmProc {
          | balance_sum,
          | total_assbal_sum,
          | peak_vasset,
+         | appr_peak_vasset,
          | approch_idle_rate,
          | remote_idle_rate,
          | idle_rate_tendency,
          | ${endDate} input_date
          | from (
-         |		select 	client_id,branch_no,c_custno,balance_sum,total_assbal_sum,peak_vasset,
+         |		select 	client_id,branch_no,c_custno,balance_sum,
+         |        total_assbal_sum,
+         |        peak_vasset,
+         |        appr_peak_vasset,
          |				approch_idle_rate,
          |				remote_idle_rate,
          |				case when (remote_idle_rate = 0 or approch_idle_rate = 0 )  then 0
          |					   else round(nvl(approch_idle_rate,0) / remote_idle_rate,2) * 100 end idle_rate_tendency
          |		from (
-         |				select  client_id,branch_no,c_custno,balance_sum,total_assbal_sum,peak_vasset,
+         |				select  client_id,branch_no,c_custno,balance_sum,total_assbal_sum,peak_vasset, appr_peak_vasset,
          |						case when total_assbal_sum = 0 then 0
          |							   else round(balance_sum/total_assbal_sum,2) * 100 end approch_idle_rate ,
          |						case when total_assbal_sum = 0 then 0
@@ -137,12 +144,14 @@ class DmCusttotalassetdmProc {
          |						select  client_id,c_custno,branch_no,
          |								sum(balance) balance_sum,
          |								sum(total_assbal) total_assbal_sum,
-         |								max(total_assbal)  peak_vasset
+         |								max(case when l_date_interval_months <= 1 then total_assbal else 0 end )  appr_peak_vasset,
+         |                max(case when l_date_interval_months <= 3 then total_assbal else 0 end )  peak_vasset
          |						from (
          |								 select
          |									   client_id,c_custno,branch_no,
          |									   balance,
-         |									   total_assbal
+         |									   total_assbal,
+         |                     l_date_interval_months
          |								 from dmCusttotalassetDmTmp
          |							)
          |						group by client_id,c_custno,branch_no
@@ -152,9 +161,24 @@ class DmCusttotalassetdmProc {
        """.stripMargin.replace("\r\n"," "))
     dmCusttotalassetdmStatDF.createOrReplaceTempView("dmCusttotalassetdmStatTmp")
 
-    spark.sql("insert  overwrite table   dm_custtotalasset_dm_stat select * from  dmCusttotalassetdmStatTmp ")
+    spark.sql(
+      s"""
+         | insert  overwrite table   dm_custtotalasset_dm_stat partition(dt=${endDate})
+         |  select
+         |      client_id,
+         |      branch_no,
+         |      c_custno,
+         |      balance_sum,
+         |      total_assbal_sum,
+         |      peak_vasset,
+         |      appr_peak_vasset,
+         |      approch_idle_rate,
+         |      remote_idle_rate,
+         |      idle_rate_tendency,
+         |      input_date from  dmCusttotalassetdmStatTmp
+       """.stripMargin.replace("\r\n"," "))
 
-
+    spark.sql("drop table if exists bigdata.dm_custtotalasset_dm_cacl")
     spark.sql(
       s"""
          | create table if not exists bigdata.dm_custtotalasset_dm_cacl
@@ -162,8 +186,10 @@ class DmCusttotalassetdmProc {
          | branch_no string
          | ,peak_vasset_avg double
          | ,peak_vasset_med double
+         | ,appr_peak_vasset_avg double
+         | ,appr_peak_vasset_med double
          | ,input_date int
-         | )  PARTITIONED BY (input_date int)
+         | )  PARTITIONED BY (dt int)
          | ROW FORMAT DELIMITED FIELDS TERMINATED BY  ${raw"'\t'"}
          | LINES TERMINATED BY ${raw"'\n'"}
          | stored as textfile
@@ -175,18 +201,29 @@ class DmCusttotalassetdmProc {
          |	case when branch_no is null then  -1 else branch_no end branch_no
          |	,peak_vasset_avg
          |	,peak_vasset_med
+         |  ,appr_peak_vasset_avg
+         |  ,appr_peak_vasset_med
          |  ,${endDate} input_date
          | from (
          |	select branch_no
          |		,round( avg(peak_vasset), 2) peak_vasset_avg
          |		,round( percentile_approx(peak_vasset,0.5), 2) peak_vasset_med
+         |    ,round( avg(appr_peak_vasset), 2) appr_peak_vasset_avg
+         |		,round( percentile_approx(appr_peak_vasset,0.5), 2) appr_peak_vasset_med
          |	 from dmCusttotalassetdmStatTmp
          |	group by branch_no,1 grouping sets(branch_no,1)
          |	)
        """.stripMargin.replace("\r\n"," "))
     dmCusttotalassetDmCaclDF.createOrReplaceTempView("dmCusttotalassetDmCaclTmp")
 
-    spark.sql("insert  overwrite table   dm_custtotalasset_dm_cacl select * from dmCusttotalassetDmCaclTmp ")
+    spark.sql(s"""insert  overwrite table   dm_custtotalasset_dm_cacl partition(dt=${endDate})
+                 | select branch_no
+                 |	,peak_vasset_avg
+                 |	,peak_vasset_med
+                 |  ,appr_peak_vasset_avg
+                 |  ,appr_peak_vasset_med
+                 |  ,input_date
+                 |  from dmCusttotalassetDmCaclTmp """.stripMargin.replace("\r\n"," "))
 
     spark.stop()
 

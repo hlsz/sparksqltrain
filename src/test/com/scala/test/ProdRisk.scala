@@ -48,9 +48,6 @@ class ProdRisk {
     StructField("fund_code",StringType,false)
   ))
 
-  var weigths = (new util.Random()).nextDouble()
-  weigths = weigths /
-
 
 
 
