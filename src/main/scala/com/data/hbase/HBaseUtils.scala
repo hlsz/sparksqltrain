@@ -1,8 +1,10 @@
 package com.data.hbase
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.hbase.client.{HBaseAdmin, HTable}
+import org.apache.hadoop.hbase.client.{Get, HBaseAdmin, HTable, Result}
+import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.{HBaseConfiguration, HTableDescriptor, TableName}
+import scala.collection.JavaConverters._
 
 object HBaseUtils {
 
@@ -43,7 +45,21 @@ object HBaseUtils {
   def getTable(conf:Configuration, tableName:String): HTable ={
     new HTable(conf,tableName)
   }
+  /**
+    * 根据rowkey集合查询hbase数据
+    * @param tableName
+    * @param keys
+    */
+  def multipleGet(tableName: String, keys: List[String]) = {
+    val hbaseConf = getHBaseConfiguration("localhost","2181",tableName)
+    var res : Array[Result] = null
+    val hTable = new HTable(hbaseConf,tableName)
+    val gets = keys.map(k => new Get(Bytes.toBytes(k))).asJava
+    res = hTable.get(gets)
+    hTable.close()
 
+    res
+  }
 
 
 }

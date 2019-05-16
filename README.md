@@ -1,2 +1,0 @@
-# sparksqltrain
-sparksqltrain
