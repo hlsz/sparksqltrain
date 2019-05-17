@@ -190,7 +190,7 @@ class DmDeliverProc {
          |						,f_fare0
          |            ,f_businessbalance
          |						,ceil(months_between('${endDateFormatStr}',
-         |                  concat(substr(open_date,0,4),'-',substr(open_date,5,2),'-',substr(open_date,7,2)) ))  l_date_interval_months
+         |                  concat(substr(l_date,0,4),'-',substr(l_date,5,2),'-',substr(l_date,7,2)) ))  l_date_interval_months
          |						,ceil(months_between('${endDateFormatStr}' ,
          |                  concat(substr(open_date,0,4),'-',substr(open_date,5,2),'-',substr(open_date,7,2)) ))  open_date_dvalue
          |				from DmDeliverTmp

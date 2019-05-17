@@ -94,7 +94,7 @@ class DmBankTransferProc {
          |		join (select client_id,concat('c',client_id) c_custno, curr_date, bktrans_status, trans_type, nvl(occur_balance, '0') occur_balance
          |						  from bigdata.hs08_his_banktransfer
          |						  where bktrans_status = '2' and trans_type in ('01', '02')
-         |					) b on  a.c_custno = b.c_custno
+         |					) b on  c.c_custno = b.c_custno
          |		where b.curr_date >= ${startDate} and curr_date <  ${endDate}
          |	) t
        """.stripMargin.replace("\r\n"," "))
@@ -273,9 +273,9 @@ class DmBankTransferProc {
          |		,medsumdvaluetendency,medfrequdvaluetendency,remo_avginsum,remo_avgoutsum,remo_avginfrequ,remo_avgoutfrequ
          |		,remo_avgsumdvalue,remo_avgfrequdvalue,remo_medinsum,remo_medoutsum,remo_medinfrequ,remo_medoutfrequ,remo_medsumdvalue
          |		,remo_medfrequdvalue, ${endDate} input_date
-         | from (
-         |	select
-         |		branch_no
+         | from (         |	select
+         |         |		branch_no
+
          |		,round(avg(appro_in_sum),2)		APPRO_AVGINSUM
          |		,round(avg(appro_out_sum),2)		APPRO_AVGOUTSUM
          |		,round(avg(appro_in_frequency),2)		APPRO_AVGINFREQU

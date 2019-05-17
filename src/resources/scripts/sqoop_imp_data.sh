@@ -9,21 +9,8 @@ export SPARK_KERBEROS_USER=spark@HAHADOOP.COM
 export HIVE_KERBEROS_FILE=hive.keytab
 export HIVE_KERBEROS_USER=hive@HAHADOOP.COM
 
-pps=prodSpark_prod_source.py
-ss=sourceSelect.py
-dir=$(cd $(dirname $0);pwd)
+dir="$(cd $(dirname $0);pwd)"
 echo $dir
-
-if [[ ! -e $HIVE_KERBEROS_FILE ]]; then
-     echo "$HIVE_KERBEROS_FILE not exists"
-     exit 0
-fi
-
-if [[ ! -e $SPARK_KERBEROS_FILE ]]; then
-    echo "$SPARK_KERBEROS_FILE not exists"
-    exit 0
-
-fi
 
 #date1 = date +%Y%m%d
 #date2 = date -d 'last year' +%Y%m%d
@@ -34,19 +21,20 @@ fi
 #if [[ ! "$*" ]];then
 
 
-if [[ ! $# == 2 ]]; then
-    echo "Usage: $0 date1 date2"
+if [[ ! $# == 1 ]]; then
+    echo "Usage: $0 date1"
     exit 0
 fi
 
 date1=$1
-date2=$2
+
+
 
 # 增量导入hs08_his_ofprice表，附带一个系统参数，筛选的时间（当天时间）
 function import_ofprice()
 {
     runuser -l hive -s /bin/bash -c "/usr/bin/kinit -kt $dir/$HIVE_KERBEROS_FILE  $HIVE_KERBEROS_USER"
-	sqoop_exec="$SQOOP_HOME/bin/sqoop import \
+	local SQOOP_EXEC="$SQOOP_HOME/bin/sqoop import \
     --connect jdbc:oracle:thin:@172.16.2.232:1521:czjmdb1 \
     --username dcetl \
     --password bigdata#6868 \
@@ -59,20 +47,20 @@ function import_ofprice()
     -m 1  \
     --incremental append \
     --check-column INIT_DATE \
-    --last-value $date1  \
+    --last-value $1  \
     --hive-overwrite \
     --hive-database bigdata \
     --hive-table ods_ofprice "
-	echo $sqoop_exec
+	echo $SQOOP_EXEC
 	return 0
-    runuser -l  hive -s /bin/bash  -c "$sqoop_exec"
+    runuser -l  hive -s /bin/bash  -c "$SQOOP_EXEC"
 }
 
 # 导入hs08_ofstkcode表，该表需要进行全部导入覆盖
 function import_ofstkcode()
 {
    runuser -l hive -s /bin/bash -c "/usr/bin/kinit -kt $dir/$HIVE_KERBEROS_FILE  $HIVE_KERBEROS_USER"
-	sqoop_exec="$SQOOP_HOME/bin/sqoop import \
+	local SQOOP_EXEC="$SQOOP_HOME/bin/sqoop import \
 	--connect jdbc:oracle:thin:@172.16.2.232:1521:czjmdb1 \
     --username dcetl --password bigdata#6868 \
     --query 'select  FUND_CODE , FUND_STATUS  from  dcraw.hs08_ofstkcode@czdcdb2 t  where  1 = 1 and \$CONDITIONS' \
@@ -87,16 +75,16 @@ function import_ofstkcode()
     --hive-database bigdata \
 	--hive-overwrite \
     --hive-table hs08_ofstkcode "
-	echo $sqoop_exec
+	echo $SQOOP_EXEC
     return 0
-    runuser -l  hive -s /bin/bash  -c "$sqoop_exec"
+    runuser -l  hive -s /bin/bash  -c "$SQOOP_EXEC"
 }
 
 # 增量导入hs08_his_prodprice表，附带一个系统参数，筛选的时间（当天时间）
 function import_hs08_his_prodprice()
 {
     runuser -l hive -s /bin/bash -c "/usr/bin/kinit -kt $dir/$HIVE_KERBEROS_FILE  $HIVE_KERBEROS_USER"
-	sqoop_exec="$SQOOP_HOME/bin/sqoop import \
+	SQOOP_EXEC="$SQOOP_HOME/bin/sqoop import \
     --connect jdbc:oracle:thin:@172.16.2.232:1521:czjmdb1 \
     --username dcetl \
     --password bigdata#6868 \
@@ -109,20 +97,20 @@ function import_hs08_his_prodprice()
     -m 1  \
     --incremental append \
     --check-column INIT_DATE \
-    --last-value $date1 \
+    --last-value $1 \
     --hive-overwrite \
     --hive-database bigdata \
     --hive-table hs08_his_prodprice"
-	echo $sqoop_exec
+	echo $SQOOP_EXEC
 	return 0
-    runuser -l  hive -s /bin/bash  -c "$sqoop_exec"
+    runuser -l  hive -s /bin/bash  -c "$SQOOP_EXEC"
 }
 
 # 导入hs08_prodcode表，该表需要进行全部导入覆盖
 function import_prodprice()
 {
     runuser -l hive -s /bin/bash -c "/usr/bin/kinit -kt $dir/$HIVE_KERBEROS_FILE  $HIVE_KERBEROS_USER"
-    sqoop_exec="
+    local SQOOP_EXEC="
     $SQOOP_HOME/bin/sqoop import --connect jdbc:oracle:thin:@172.16.2.232:1521:czjmdb1 \
     --username dcetl --password bigdata#6868 \
     --query 'select prod_code ,PROD_STATUS  from  dcraw.hs08_prodcode@czdcdb2 t  where  1 = 1 and \$CONDITIONS' \
@@ -137,75 +125,10 @@ function import_prodprice()
     --hive-database bigdata \
 	--hive-overwrite \
     --hive-table hs08_prodcode "
-	echo $sqoop_exec
+	echo $SQOOP_EXEC
     return 0
-    runuser -l  hive -s /bin/bash  -c "$sqoop_exec"
+    runuser -l  hive -s /bin/bash  -c "$SQOOP_EXEC"
 }
-
-# 执行产品组合优化的计算，运行prodSpark_prod_source.py脚本，附带2个系统参数，当前时间，去年时间
-function prodSpark_prod_source()
-{   runuser -l  spark -s /bin/bash  -c  "/usr/bin/kinit -kt $dir/$SPARK_KERBEROS_FILE $SPARK_KERBEROS_USER"
-    runuser -l  spark -s /bin/bash  -c "
-    $SPARK_HOME/bin/spark-submit  \
-    --master yarn \
-    --deploy-mode cluster  \
-    --principal 'spark@HAHADOOP.COM' \
-    --keytab 'spark.keytab' \
-    --conf spark.pyspark.python=/usr/local/anaconda2/bin/python \
-    --conf spark.pyspark.driver.python=/usr/local/anaconda2/bin/python \
-    --conf spark.sql.shuffle.partitions=400 \
-    --conf spark.default.parallelism=180 \
-    --conf spark.shuffle.file.buffer=128K\
-    --conf spark.reducer.maxSizeInFlight=96M \
-    --conf spark.shuffle.consolidateFiles=true \
-    --driver-memory 2g \
-    --executor-memory 4g \
-    --executor-cores 3 \
-    --num-executors 30 \
-     $pps $date1 $date2 "
-}
-
-# 执行数据筛选脚本sourceSelect.py  附带一个系统参数，筛选的时间（当天时间）
-function sourceSelect()
-{
-    runuser -l  spark -s /bin/bash  -c  "/usr/bin/kinit -kt $dir/$SPARK_KERBEROS_FILE $SPARK_KERBEROS_USER"
-    runuser -l  spark -s /bin/bash  -c  "
-    $SPARK_HOME/bin/spark-submit  \
-    --master yarn \
-    --deploy-mode cluster  \
-    --principal 'spark@HAHADOOP.COM' \
-    --keytab 'spark.keytab' \
-    --conf spark.pyspark.python=/usr/local/anaconda2/bin/python \
-    --conf spark.pyspark.driver.python=/usr/local/anaconda2/bin/python \
-    --conf spark.sql.shuffle.partitions=400 \
-    --conf spark.default.parallelism=180 \
-    --conf spark.shuffle.file.buffer=128K \
-    --conf spark.reducer.maxSizeInFlight=96M \
-    --conf spark.shuffle.consolidateFiles=true \
-    --driver-memory 2g \
-    --executor-memory 4g \
-    --executor-cores 3 \
-    --num-executors 30 \
-     $ss $date1 "
-}
-
-# 把筛选后的数据集导入建模库中
-function export_dm_comb_result_select()
-{
-    runuser -l hive -s /bin/bash -c "/usr/bin/kinit -kt $dir/$HIVE_KERBEROS_FILE  $HIVE_KERBEROS_USER"
-    su hive -l -c "
-    $SOOP_HOME/bin/sqoop export \
-    --connect jdbc:oracle:thin:@172.16.2.232:1521:czjmdb1 \
-    --username dcetl \
-    --password bigdata#6868 \
-    --table DM_COMB_RESULT \
-    --columns 'init_date,fp_code_1,fp_code_2,fp_code_3,weight_1,weight_2,weight_3,count_returns,count_risk,count_sharp' \
-    --export-dir /user/hive/warehouse/bigdata.db/dm_comb_result_select \
-    --input-fields-terminated-by '\t' \
-    --input-lines-terminated-by '\n'   \
-    -m 1 "
-}
-
 
 
 import_ofprice $date1
@@ -241,32 +164,3 @@ if [[ $? -ne 0 ]]; then
 else
     echo "import_prodprice succeed"
 fi
-
-
-prodSpark_prod_source $date1 $date2
-if [[ $? -ne 0 ]]; then
-    echo "prodSpark_prod_source failed"
-    exit 0
-else
-    echo "prodSpark_prod_source succeed"
-fi
-
-sourceSelect $date1
-if [[ $? -ne 0 ]]; then
-    echo "sourceSelect failed"
-    exit 0
-else
-    echo "sourceSelect succeed"
-fi
-
-export_dm_comb_result_select
-if [[ $? -ne 0 ]]; then
-    echo "export_dm_comb_result_select failed"
-    exit 0
-else
-    echo "export_dm_comb_result_select succeed"
-fi
-
-
-
-
