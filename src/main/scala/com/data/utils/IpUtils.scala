@@ -1,10 +1,10 @@
 package com.data.utils
 
-import com.ggstar.util.ip.IpHelper
+//import com.ggstar.util.ip.IpHelper
 
 object IpUtils {
   def getCity(ip:String) ={
-    IpHelper.findRegionByIp(ip)
+//    IpHelper.findRegionByIp(ip)
   }
 
   def main(args: Array[String]): Unit = {

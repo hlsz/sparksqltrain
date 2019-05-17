@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="sparksqltrain">
+    <output-path>$PROJECT_DIR$/classes/artifacts/sparksqltrain</output-path>
+    <root id="archive" name="sparksqltrain.jar">
+      <element id="module-output" name="sparksqltrain" />
+      <element id="library" level="application" name="scala-sdk-2.11.12" />
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+    </root>
+  </artifact>
+</component>

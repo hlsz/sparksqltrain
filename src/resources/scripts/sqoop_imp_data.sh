@@ -48,7 +48,7 @@ function import_ofprice()
     --incremental append \
     --check-column INIT_DATE \
     --last-value $1  \
-    --hive-overwrite \
+    --hive-import \
     --hive-database bigdata \
     --hive-table ods_ofprice "
 	echo $SQOOP_EXEC
@@ -98,7 +98,7 @@ function import_hs08_his_prodprice()
     --incremental append \
     --check-column INIT_DATE \
     --last-value $1 \
-    --hive-overwrite \
+    --hive-import \
     --hive-database bigdata \
     --hive-table hs08_his_prodprice"
 	echo $SQOOP_EXEC
@@ -106,7 +106,7 @@ function import_hs08_his_prodprice()
     runuser -l  hive -s /bin/bash  -c "$SQOOP_EXEC"
 }
 
-# 导入hs08_prodcode表，该表需要进行全部导入覆盖
+# 全量导入hs08_prodcode表，该表需要进行全部导入覆盖
 function import_prodprice()
 {
     runuser -l hive -s /bin/bash -c "/usr/bin/kinit -kt $dir/$HIVE_KERBEROS_FILE  $HIVE_KERBEROS_USER"
