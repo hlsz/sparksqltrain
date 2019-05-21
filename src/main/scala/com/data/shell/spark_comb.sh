@@ -29,9 +29,9 @@ function prodSpark_prod_source()
     local SPARK_EXEC="
     $SPARK_HOME/bin/spark-submit  \
     --master yarn \
-    --deploy-mode cluster  \
-    --principal 'spark@HAHADOOP.COM' \
-    --keytab 'spark.keytab' \
+    --deploy-mode client  \
+    --principal '$SPARK_KERBEROS_USER' \
+    --keytab '$dir/$SPARK_KERBEROS_FILE' \
     --conf spark.pyspark.python=/usr/local/anaconda2/bin/python \
     --conf spark.pyspark.driver.python=/usr/local/anaconda2/bin/python \
     --conf spark.sql.shuffle.partitions=400 \
@@ -55,9 +55,9 @@ function sourceSelect()
     local SPARK_EXEC="
     $SPARK_HOME/bin/spark-submit  \
     --master yarn \
-    --deploy-mode cluster  \
-    --principal 'spark@HAHADOOP.COM' \
-    --keytab 'spark.keytab' \
+    --deploy-mode client  \
+    --principal '$SPARK_KERBEROS_USER' \
+    --keytab '$dir/$SPARK_KERBEROS_FILE' \
     --conf spark.pyspark.python=/usr/local/anaconda2/bin/python \
     --conf spark.pyspark.driver.python=/usr/local/anaconda2/bin/python \
     --conf spark.sql.shuffle.partitions=400 \

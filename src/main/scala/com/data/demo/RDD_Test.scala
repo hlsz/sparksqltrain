@@ -1,25 +1,9 @@
-package com.scala.test
+package com.data.demo
 
-import com.data.utils.DateUtils
 import org.apache.spark.{SparkConf, SparkContext}
-import org.junit._
 
-@Test
-class AppTest {
-
-    @Test
-//    def testOK() = assertTrue(true)
-  def test(): Unit =
-  {
-     val sttr =     DateUtils.intToDateStr(20180903)
-    println(sttr)
-  }
-
-//    @Test
-//    def testKO() = assertTrue(false)
-
-  @Test
-  def test2() {
+object RDD_Test {
+  def main(args: Array[String]): Unit = {
     val conf  = new SparkConf().setMaster("local").setAppName("rdd")
     val sc = new SparkContext(conf)
 
@@ -30,12 +14,6 @@ class AppTest {
     for (elem <- rdd1.countByKey()){
       print(elem)
     }
-
-
-
   }
 
-
 }
-
-
