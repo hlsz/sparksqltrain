@@ -97,6 +97,16 @@ class CalcuteCustInfo{
          | from custInfoTmp where input_date = ${endDate} ) a
        """.stripMargin.stripMargin.replace("\r\n"," "))
     dmCustStatDF.createOrReplaceTempView("dmCustStatTmp")
+
+    // dmCustStatDF.queryExecution
+    // Parsed Logical Plan
+    // Analyzed Logical Plan
+    // Optimized Logical Plan
+    // dmCustStatDF.queryExecution.sparkPlan
+    // Physical Plan
+
+
+
     //删除临时表
 //    spark.catalog.dropTempView("dmCustStatTmp")
 

@@ -12,8 +12,28 @@ object RDD_Test {
 
 
     for (elem <- rdd1.countByKey()){
-      print(elem)
+      println(elem)
     }
+
+    val cnt = sc.accumulator(0)
+    val rdd2 = sc.makeRDD(1 to 10, 2)
+    rdd2.foreach(println(_))
+    rdd2.foreach(x => cnt += x)
+    println(cnt)
+
+
+    val rdd3 = sc.makeRDD(Seq(3, 6,7,1,2,0), 2)
+    rdd3.sortBy(x=>x).collect().foreach(println(_))
+
+    rdd3.sortBy(x=>x, false).collect().foreach(println(_))
+
+    //RDD[K, V]类型
+    //按照key来排序
+    rdd1.sortBy(x=>x).collect().foreach(println(_))
+
+    //按照VALUE的升序排列，false降序
+    rdd1.sortBy(x=>x._2, true).collect().foreach(println(_))
+
   }
 
 }
