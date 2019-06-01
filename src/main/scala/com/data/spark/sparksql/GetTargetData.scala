@@ -1,5 +1,4 @@
-package com.data.spark
-
+package com.data.spark.sparksql
 
 import java.util.Date
 

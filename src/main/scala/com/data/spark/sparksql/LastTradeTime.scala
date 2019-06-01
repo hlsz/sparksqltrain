@@ -1,4 +1,4 @@
-package com.data.spark
+package com.data.spark.sparksql
 
 import com.data.utils.DateUtils
 

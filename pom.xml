@@ -301,32 +301,32 @@
         </dependency>
 
         <!--https://mvnrepository.com/artifact/org.json4s/json4s-core-->
-        <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-core_2.11</artifactId>
-            <version>3.6.5</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.json4s</groupId>-->
+<!--            <artifactId>json4s-core_2.11</artifactId>-->
+<!--            <version>3.6.5</version>-->
+<!--        </dependency>-->
 
         <!--https://mvnrepository.com/artifact/org.json4s/json4s-ext-->
-        <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-ext_2.11</artifactId>
-            <version>3.6.5</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.json4s</groupId>-->
+<!--            <artifactId>json4s-ext_2.11</artifactId>-->
+<!--            <version>3.6.5</version>-->
+<!--        </dependency>-->
 
         <!--https://mvnrepository.com/artifact/org.json4s/json4s-jackson-->
-        <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-jackson_2.11</artifactId>
-            <version>3.6.5</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.json4s</groupId>-->
+<!--            <artifactId>json4s-jackson_2.11</artifactId>-->
+<!--            <version>3.6.5</version>-->
+<!--        </dependency>-->
 
         <!--https://mvnrepository.com/artifact/org.json4s/json4s-native-->
-        <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-native_2.11</artifactId>
-            <version>3.6.5</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.json4s</groupId>-->
+<!--            <artifactId>json4s-native_2.11</artifactId>-->
+<!--            <version>3.6.5</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.scala-lang</groupId>

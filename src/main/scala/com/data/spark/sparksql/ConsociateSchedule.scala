@@ -1,4 +1,4 @@
-package com.data.spark
+package com.data.spark.sparksql
 
 object ConsociateSchedule {
 
