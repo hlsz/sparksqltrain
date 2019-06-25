@@ -1,4 +1,4 @@
-package scala.service
+package com.scala.test
 
 import org.apache.hadoop.io.{IntWritable, Text}
 import org.apache.spark.{SparkConf, SparkContext}

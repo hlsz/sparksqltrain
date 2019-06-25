@@ -18,6 +18,8 @@ object DataFrameRDD {
     spark.stop()
   }
 
+
+
   def reflection(spark:SparkSession): Unit ={
 
     //得到RDD 每一行一个记录 每一行中的多个字段用逗号分隔

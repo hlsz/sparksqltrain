@@ -1,6 +1,12 @@
 package com.data.etl
 
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.sql.DataFrame
+
 object Func {
+
+  val conf = new SparkConf().setMaster("local")
 
   def main(args: Array[String]): Unit = {
 
@@ -62,18 +68,54 @@ object Func {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
   }
+
+  //scala
+  // 初始化代码；从HDFS商的一个Hadoop SequenceFile中读取用户信息
+  // userData中的元素会根据它们被读取时的来源，即HDFS块所在的节点来分布
+  // Spark此时无法获知某个特定的UserID对应的记录位于哪个节点上
+//  val sc = new SparkContext(conf)
+  //  val userData = sc.sequenceFile[UserID, UserInfo]("hdfs://...").persist()
+
+//  对userdata 表使用partitionBy()将该表转化为哈希分区
+  // 构造100个分区
+//  val userData = sc.sequenceFile[UserID, UserInfo]("hdfs://...").partitionBy(new HashPartitioner(100)) .persist()
+  
+//  // 周期性调用函数来处理过去五分钟产生的事件日志
+//  // 假设这是一个包含(UserID, LinkInfo)对的SequenceFile
+//  def processNewLogs(logFileName: String) {
+//    val events = sc.sequenceFile[UserID, LinkInfo](logFileName)
+//    val joined = userData.join(events)// RDD of (UserID, (UserInfo, LinkInfo)) pairs
+//    val offTopicVisits = joined.filter {
+//      case (userId, (userInfo, linkInfo)) => !userInfo.topics.contains(linkInfo.topic)
+//    }.count()
+//    println("Number of visits to non-subscribed topics: " + offTopicVisits)
+//  }
+
+
+  val labelCol = "label"
+  def balanceDataset(dataset: DataFrame):DataFrame ={
+    val numNegatives = dataset.filter(dataset(labelCol) === 0).count()
+    val datasetSize = dataset.count()
+    val balancingRatio = (datasetSize - numNegatives).toDouble /  datasetSize
+
+    val calculateWeights = udf {
+      d: Double =>
+        i (d == 0.0) {
+          1 * balancingRatio
+        } else {
+        (1 * (1.0 - balancingRatio))
+      }
+    }
+
+    val weightedDataset = dataset.withColumn("classWeightCol",
+      calculateWeights(dataset(labelCol)))
+    weightedDataset
+  }
+
+  val df_weighted = balanceDataset(df)
+  val lr = new LogisticRegression()
+    .setLabelCol(labelCol)
+    .setWeightCol("classWeightCol")
 
 }

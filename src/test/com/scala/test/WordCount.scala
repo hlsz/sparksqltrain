@@ -1,4 +1,4 @@
-package scala.service
+package com.scala.test
 
 import java.io.StringWriter
 

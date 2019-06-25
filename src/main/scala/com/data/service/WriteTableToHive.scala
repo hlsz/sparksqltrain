@@ -1,6 +1,6 @@
 package com.data.service
 
-import com.data.dao.ProductData
+import com.data.model.ProductData
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 

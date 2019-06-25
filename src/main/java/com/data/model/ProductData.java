@@ -1,4 +1,4 @@
-package com.data.dao;
+package com.data.model;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

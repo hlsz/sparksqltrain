@@ -3,7 +3,7 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.{GBTClassificationModel, GBTClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SaveMode, SparkSession}
 
 object GbdtDemo01 {
 
@@ -14,7 +14,12 @@ object GbdtDemo01 {
       .getOrCreate()
 
     // Load and parse the data file, converting it to a DataFrame.
+
     val data = spark.read.format("libsvm").load("src/resources/sample_lda_libsvm_data.txt")
+//    spark.read.parquet("src/resources/sample_lda_libsvm_data.parquet")
+
+//    data.write.mode(SaveMode.Overwrite).format("parquet").save("./sparksql/parquet")
+//    data.write.mode(SaveMode.Overwrite).parquet("./sparksql/parquet")
 
     // Index labels, adding metadata to the label column.
     // Fit on whole dataset to include all labels in index.

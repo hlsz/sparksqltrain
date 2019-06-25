@@ -43,6 +43,28 @@
     </dependencyManagement>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-common</artifactId>
+            <version>1.8.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-encoding</artifactId>
+            <version>1.8.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-column</artifactId>
+            <version>1.8.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-hadoop</artifactId>
+            <version>1.8.1</version>
+        </dependency>
+
         <dependency>
             <groupId>com.typesafe.slick</groupId>
             <artifactId>slick_2.10</artifactId>
@@ -353,6 +375,20 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>com.databricks</groupId>
+            <artifactId>spark-csv_2.11</artifactId>
+            <version>1.5.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.databricks/dbutils-api -->
+        <dependency>
+            <groupId>com.databricks</groupId>
+            <artifactId>dbutils-api_2.11</artifactId>
+            <version>0.0.3</version>
+        </dependency>
+
+
+
         <!--hivecontext要用这个依赖-->
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -392,11 +428,6 @@
             <version>3.14</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.ggstar</groupId>
-            <artifactId>ipdatabase</artifactId>
-            <version>1.0</version>
-        </dependency>
 
         <!--https://mvnrepository.com/artifact/mysql/mysql-connector-java-->
         <dependency>
