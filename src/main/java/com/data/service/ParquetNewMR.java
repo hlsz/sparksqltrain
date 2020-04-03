@@ -74,11 +74,11 @@ public class ParquetNewMR {
     }
 
     public static void main(String[] args) {
-        Configuration  conf = new Configuration()
-                String writeSchema = "message example {\n" +
-                        "required binary name;\n" +
-                        "required int32 age;\n" +
-                        "}";
+        Configuration  conf = new Configuration();
+        String writeSchema = "message example {\n" +
+                "required binary name;\n" +
+                "required int32 age;\n" +
+                "}";
         conf.set("parquet.example.schema", writeSchema);
     }
 }

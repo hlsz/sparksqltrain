@@ -28,4 +28,5 @@ public class MeiTuanData {
     public void setShopName(String shopName) {
         this.shopName = shopName;
     }
+
 }

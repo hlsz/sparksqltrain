@@ -2,9 +2,10 @@ package com.data.spark.sparksql
 
 import com.data.utils.DateUtils
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.SparkSession;
 
 class BankBondCalculte {
+
   val conf = new SparkConf()
     .setAppName("BankBondCalculte")
     .setMaster("yarn-client")

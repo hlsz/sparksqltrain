@@ -2,6 +2,8 @@ package com.data.utils
 
 import org.apache.hadoop.fs.permission._
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.SparkContext
+
 import scala.collection.JavaConversions._
 
 
@@ -94,6 +96,15 @@ object HDFSUtilScala {
       }
     })
     listPath
+  }
+
+  def deleteOutPutPath(sc: SparkContext,outputPath: String):Unit={
+    val path = new Path(outputPath)
+    val hadoopConf = sc.hadoopConfiguration
+    val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
+    if(hdfs.exists(path)){
+      hdfs.delete(path,true)
+    }
   }
 
 }

@@ -908,22 +908,23 @@ object DateUtils {
   }
 
   def parse(time:String){
-    TARGET_FORMAT.format(new Date(getTime(time)))
+//    TARGET_FORMAT.format(new Date(getTime(time)))
+    return "1";
   }
 
   /**
     * 获取输入日志Long类型的时间
     *
     */
-  def getTime(time: String): Long ={
-    try{
-      YYYYMMDDHHMM_TIME_FORMAT.parse(time.substring(time.indexOf("[") + 1, time.lastIndexOf("]"))).getTime()
-    }catch{
-      case e:Exception =>{
-          0L
-      }
-    }
-  }
+//  def getTime(time: String): Long ={
+//    try{
+////      YYYYMMDDHHMM_TIME_FORMAT.parse(time.substring(time.indexOf("[") + 1, time.lastIndexOf("]"))).getTime()
+//    }catch {
+//      case e:Exception =>{
+//          0L
+//      }
+//    }
+//  }
 
   //核心工作时间，迟到早退等的的处理
   def getCoreTime2(start_time:String,end_Time:String)={

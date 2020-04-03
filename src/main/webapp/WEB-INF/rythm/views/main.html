@@ -1,0 +1,44 @@
+@args String title = "ABC Corporate"
+<!DOCTYPE html>
+<html>
+<head>
+    main head
+</head>
+<body>
+    <div id="header">
+        <h1>@title</h1>
+    </div>
+    <div id=sidebar">
+        @//输出边栏内容
+        @render("sidebar")
+    </div>
+
+    <div id="content">
+        @//输出主内容
+        @render() @// or doLayout()
+    </div>
+
+    <div id="foobar">
+        @render("foobar"){
+        @// 我们在这定义"foobar"节的 缺省内容
+        @//如果子模块没有提供"foobar"节的定义
+        @//这里定义的缺省内容将被输出
+        <p>Site footer - &copy; Santa Clause</p>
+        }
+    </div>
+</body>
+</html>
+
+@extends(main, title:"About me")
+<h2>Welcome to my site</h2>
+<p> This is our home page</p>
+<p> Not super exciting is it?</p>
+<p> tttt </p>
+
+@section("sidebar") {@// define "sidebar" section}
+<p>This sidebar has "home page" spectific content</p>
+        <ul>
+            <li><a href="#">Link One</a></li>
+            <li><a href="#">Line two</a></li>
+            <li><a href="#">Line three</a></li>
+        </ul>

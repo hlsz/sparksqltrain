@@ -1,0 +1,105 @@
+@args String whoCallMe, boolean sayBye
+@** the sample.html template **@
+@if (sayBye) {
+        @whoCallMe Bye!
+}
+
+@args User user, Foo foo
+@foo.bar
+<ul>
+    @for(Product product: products) {
+    <li>
+        @product.getName().Price: @product.getPrice().format("## ###,00")
+    </li>
+    }
+</ul>
+
+@if (user.hasRole("guest)) {
+        <p>你无权访问当前页面</p>
+        @return
+}
+@// 以下为授权访问内容
+
+@args String platform   @// platform pc iphone
+
+@invoke("designer." + platform)
+
+@greenscript.js(){
+        $(function()) {}
+}
+@lookupRole(permission: "superuser").callback(list<Role> roleList){
+    <ul>superusers
+        @for(Role role: roleList) {
+        <li>@role.getName()</li>
+        }
+    </ul>
+}
+
+@extends(main)
+<p>template content</p>
+
+    <h1>Main template</h1>
+    <div id="content">
+        @doLayout
+    </div>
+
+    @**定义宏**@
+    @macro("myMacro){
+    myMacro
+    }
+    @**执行宏**@
+    @exec("myMacro)
+    @myMacro
+
+    @macro("foo"){
+    <foo>
+        <bar>abc</bar>
+    </foo>
+    }
+    @compact() {@exec("foo")}
+    @nocompact() {@exec("foo")}
+
+    @def foo() {
+    <foo>
+        <bar>abc</bar>
+    </foo>
+    }
+    @compact() {@foo()}
+    @nocompact() {@foo()}
+
+    @def foo() {foo inside inline tag}
+    @macro(foo) {foo inside macro}
+
+    @foo
+
+    <h1>Main template</h1>
+    <div id="content">
+        @doLayout(){
+        default content
+        }
+    </div>
+
+
+    @assign("foo") {
+    <foo>
+        <bar>abc</bar>
+    </foo>
+    }
+    @compact() {@foo.row()}
+    @nocompact() {@foo.row()}
+
+    @** 继承layout.foo.bar
+    @extends(layout.foo.bar)
+
+
+
+
+
+
+
+
+
+
+
+
+

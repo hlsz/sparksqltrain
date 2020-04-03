@@ -2,6 +2,7 @@ package com.data.etl
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 
 
@@ -57,4 +58,18 @@ class User1 (val id:Long,
   override def toString: String = {
     s"User:{$id, $name, $fv, $age}"
   }
+
+  val spark = SparkSession.builder().enableHiveSupport().getOrCreate()
+//  val sc = spark.sparkContext
+//  val sqlContext = new SQLContext(sc)
+//  注册udf函数 注意不要少了最后的一个下划线
+  spark.udf.register("len", len _)
+  spark.udf.register("longLength", lengthLongerThan _)
+
+  def len(bookTitle: String):Int ={bookTitle.length}
+
+  def lengthLongerThan(bookTitle:String, length:Int):Boolean = {
+    bookTitle.length > length
+  }
+
 }

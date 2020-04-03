@@ -2,7 +2,7 @@ package com.java.test;
 
  import com.data.utils.HDFSUtils;
 
- import com.data.service.HDFSAdminUtils;
+ import com.data.utils.HDFSAdminUtils;
  import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -15,10 +15,6 @@ import java.util.Properties;
 /**
  * package: com.cloudera.hdfs.basic
  * describe: 使用HDFS的Client Admin API操作HDFS，Kerberos环境下访问
- * creat_user: Fayson
- * email: htechinfo@163.com
- * creat_date: 2018/6/8
- * creat_time: 上午10:24
  * 公众号：Hadoop实操
  */
 public class HDFSAdminTest {

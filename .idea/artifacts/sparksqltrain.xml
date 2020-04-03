@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="sparksqltrain">
-    <output-path>$PROJECT_DIR$/classes/artifacts/sparksqltrain</output-path>
+    <output-path>$PROJECT_DIR$/output/artifacts/sparksqltrain</output-path>
     <root id="archive" name="sparksqltrain.jar">
       <element id="module-output" name="sparksqltrain" />
       <element id="library" level="application" name="scala-sdk-2.11.12" />
