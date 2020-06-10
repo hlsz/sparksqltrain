@@ -1,4 +1,4 @@
-package com.hazq.ccg.utils;
+package com.data.utils;
 
 import org.springframework.util.StringUtils;
 
@@ -19,7 +19,7 @@ import java.util.GregorianCalendar;
  * @date： 日期：2012-12-8 时间：下午12:15:03
  * @version 1.0
  */
-public class DateUtils extends PropertyEditorSupport {
+public class DateUtilsJava extends PropertyEditorSupport {
     // 各种时间格式
     public static final SimpleDateFormat date_sdf = new SimpleDateFormat(
             "yyyy-MM-dd");

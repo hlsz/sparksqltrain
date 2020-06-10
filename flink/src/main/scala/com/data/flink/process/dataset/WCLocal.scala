@@ -1,7 +1,6 @@
-package com.data.flink.process
+package com.data.flink.process.dataset
 
-import org.apache.flink.api.scala.ExecutionEnvironment
-import org.apache.flink.api.scala._
+import org.apache.flink.api.scala.{ExecutionEnvironment, _}
 
 object WCLocal {
 

@@ -16,7 +16,6 @@ import java.util.List;
 /**
  * <p>Title: main </P>
  * <p>Description: TODO </P>
- * @param args
  * return void    返回类型
  * throws
  * date 2014-11-24 上午09:11:47
@@ -27,7 +26,7 @@ public class DateUtil{
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             DBConn conn = new DBConn();
             Connection conn2 = conn.Conn();
-            String sql= "select * from lian";
+            String sql= "select * from dual";
             PreparedStatement statement = conn2.prepareStatement(sql);
 
             ResultSet resultSet = statement.executeQuery();

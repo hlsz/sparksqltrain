@@ -1,5 +1,4 @@
-package com.data.flink.process
-
+package com.data.flink.process.datastream
 
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment

@@ -14,7 +14,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RSAEncryptUtil {
+public class RSAEncryptUtil2 {
     private static Map<Integer, String> keyMap = new HashMap<Integer, String>();  //用于封装随机产生的公钥与私钥
     public static void main(String[] args) throws Exception {
         //生成公钥和私钥

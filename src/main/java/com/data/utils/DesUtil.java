@@ -5,80 +5,167 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 import java.security.SecureRandom;
-/**
- DES加密介绍
- DES是一种对称加密算法，所谓对称加密算法即：加密和解密使用相同密钥的算法。DES加密算法出自IBM的研究，
- 后来被美国政府正式采用，之后开始广泛流传，但是近些年使用越来越少，因为DES使用56位密钥，以现代计算能力，
- 24小时内即可被破解。虽然如此，在某些简单应用中，我们还是可以使用DES加密算法，本文简单讲解DES的JAVA实现
- 。
- 注意：DES加密和解密过程中，密钥长度都必须是8的倍数
- */
-public class DesUtil {
-    public DesUtil() {
-    }
-    //测试
-    public static void main(String args[]) {
-        //待加密内容
-        String str = "测试内容";
-        //密码，长度要是8的倍数
-        String password = "9588028820109132570743325311898426347857298773549468758875018579537757772163084478873699447306034466200616411960574122434059469100235892702736860872901247123456";
 
-        byte[] result = DesUtil.encrypt(str.getBytes(),password);
-        System.out.println("加密后："+new String(result));
-        //直接将如上内容解密
-        try {
-            byte[] decryResult = DesUtil.decrypt(result, password);
-            System.out.println("解密后："+new String(decryResult));
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }
-    }
+public class DesUtil {
+
+    // 密钥，是加密解密的凭据，长度为8的倍数
+    private static final String PASSWORD_CRYPT_KEY = "12345678";
+    private final static String DES = "DES";
+
     /**
      * 加密
-     * @param datasource byte[]
-     * @param password String
-     * @return byte[]
+     *
+     * @param src 数据源
+     * @param key 密钥，长度必须是8的倍数
+     * @return 返回加密后的数据
+     * @throws Exception
      */
-    public static  byte[] encrypt(byte[] datasource, String password) {
-        try{
-            SecureRandom random = new SecureRandom();
-            DESKeySpec desKey = new DESKeySpec(password.getBytes());
-            //创建一个密匙工厂，然后用它把DESKeySpec转换成
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DES");
-            SecretKey securekey = keyFactory.generateSecret(desKey);
-            //Cipher对象实际完成加密操作
-            Cipher cipher = Cipher.getInstance("DES");
-            //用密匙初始化Cipher对象
-            cipher.init(Cipher.ENCRYPT_MODE, securekey, random);
-            //现在，获取数据并加密
-            //正式执行加密操作
-            return cipher.doFinal(datasource);
-        }catch(Throwable e){
-            e.printStackTrace();
+    public static byte[] encrypt(byte[] src, byte[] key) throws Exception {
+
+        // DES算法要求有一个可信任的随机数源
+        SecureRandom sr = new SecureRandom();
+
+        // 从原始密匙数据创建DESKeySpec对象
+        DESKeySpec dks = new DESKeySpec(key);
+
+        // 创建一个密匙工厂，然后用它把DESKeySpec转换成
+        // 一个SecretKey对象
+        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(DES);
+
+        SecretKey securekey = keyFactory.generateSecret(dks);
+
+        // Cipher对象实际完成加密操作
+        Cipher cipher = Cipher.getInstance(DES);
+
+        // 用密匙初始化Cipher对象
+        cipher.init(Cipher.ENCRYPT_MODE, securekey, sr);
+
+        // 现在，获取数据并加密
+        // 正式执行加密操作
+        return cipher.doFinal(src);
+
+    }
+
+    /**
+     * 解密
+     *
+     * @param src 数据源
+     * @param key 密钥，长度必须是8的倍数
+     * @return 返回解密后的原始数据
+     * @throws Exception
+     */
+    public static byte[] decrypt(byte[] src, byte[] key) throws Exception {
+
+        // DES算法要求有一个可信任的随机数源
+        SecureRandom sr = new SecureRandom();
+        // 从原始密匙数据创建一个DESKeySpec对象
+        DESKeySpec dks = new DESKeySpec(key);
+
+        // 创建一个密匙工厂，然后用它把DESKeySpec对象转换成
+        // 一个SecretKey对象
+        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(DES);
+
+        SecretKey securekey = keyFactory.generateSecret(dks);
+
+        // Cipher对象实际完成解密操作
+        Cipher cipher = Cipher.getInstance(DES);
+
+        // 用密匙初始化Cipher对象
+        cipher.init(Cipher.DECRYPT_MODE, securekey, sr);
+
+        // 现在，获取数据并解密
+        // 正式执行解密操作
+        return cipher.doFinal(src);
+
+    }
+
+    /**
+     * 密码解密
+     *
+     * @param data
+     * @return
+     * @throws Exception
+     */
+    public final static String decrypt(String data) {
+
+        try {
+            return new String(decrypt(hex2byte(data.getBytes()), PASSWORD_CRYPT_KEY.getBytes()));
+        } catch (Exception e) {
+
         }
         return null;
     }
+
     /**
-     * 解密
-     * @param src byte[]
-     * @param password String
-     * @return byte[]
+     * 密码加密
+     *
+     * @param password
+     * @return
      * @throws Exception
      */
-    public static byte[] decrypt(byte[] src, String password) throws Exception {
-        // DES算法要求有一个可信任的随机数源
-        SecureRandom random = new SecureRandom();
-        // 创建一个DESKeySpec对象
-        DESKeySpec desKey = new DESKeySpec(password.getBytes());
-        // 创建一个密匙工厂
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DES");
-        // 将DESKeySpec对象转换成SecretKey对象
-        SecretKey securekey = keyFactory.generateSecret(desKey);
-        // Cipher对象实际完成解密操作
-        Cipher cipher = Cipher.getInstance("DES");
-        // 用密匙初始化Cipher对象
-        cipher.init(Cipher.DECRYPT_MODE, securekey, random);
-        // 真正开始解密操作
-        return cipher.doFinal(src);
+    public final static String encrypt(String password) {
+        try {
+            return byte2hex(encrypt(password.getBytes(), PASSWORD_CRYPT_KEY.getBytes()));
+        } catch (Exception e) {
+
+        }
+        return null;
     }
+
+    /**
+     * 二行制转字符串
+     *
+     * @param b
+     * @return
+     */
+    public static String byte2hex(byte[] b) {
+
+        String hs = "";
+        String stmp = "";
+        for (int n = 0; n < b.length; n++) {
+            stmp = (java.lang.Integer.toHexString(b[n] & 0XFF));
+            if (stmp.length() == 1)
+                hs = hs + "0" + stmp;
+            else
+                hs = hs + stmp;
+        }
+        return hs.toUpperCase();
+    }
+
+    /**
+     * 字符串转二行制
+     *
+     * @param b
+     * @return
+     */
+    public static byte[] hex2byte(byte[] b) {
+
+        if ((b.length % 2) != 0)
+            throw new IllegalArgumentException("长度不是偶数");
+        byte[] b2 = new byte[b.length / 2];
+        for (int n = 0; n < b.length; n += 2) {
+            String item = new String(b, n, 2);
+            b2[n / 2] = (byte) Integer.parseInt(item, 16);
+        }
+        return b2;
+    }
+
+    public static String CreateKey() {
+        char Key[];
+        String keyWords = "";
+        String date = DateUtilsJava.date2Str(DateUtilsJava.getDate(),  DateUtilsJava.yyyymmddhhmmss);
+        date = date.substring(0, 10);
+        String dateKey = DesUtil.encrypt(date);
+        Key = dateKey.substring(dateKey.length() - 4, dateKey.length()).toCharArray();
+        for (char c1 : Key) {
+            int ascll = c1;
+            keyWords += ascll % 10;
+        }
+        return keyWords;
+    }
+
+
 }
+
+
+

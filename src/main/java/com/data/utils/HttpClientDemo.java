@@ -1,7 +1,6 @@
-package com.hazq.ccg.utils;
+package com.data.utils;
 
 
-import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.http.Cookie;
@@ -11,8 +10,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 
-@Log4j2
-public class HttpClient {
+
+
+public class HttpClientDemo {
 
     public static String get(String urlStr, Map<String, String> params) {
         InputStream is = null;
@@ -163,7 +163,7 @@ public class HttpClient {
                     in.close();
                 }
             } catch (IOException ex) {
-                log.error(ex);
+                //log.error(ex);
                 ex.printStackTrace();
             }
         }
